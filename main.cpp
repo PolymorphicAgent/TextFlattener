@@ -2,6 +2,7 @@
 
 #include "File.h"
 #include "Utils.h"
+#include "CompressionTable.h"
 
 #include <fstream>
 
