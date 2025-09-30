@@ -57,6 +57,41 @@ int main(int argc, char *argv[]){
 
     std::cout << "\n-------------------------------" << std::endl;
 
+    std::cout << "Testing CSVFile Writing" << std::endl;
+    // Create a CSVFile object
+    CSVFile csvFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.csv");
+    // set some data
+    std::vector<std::vector<std::string>> sampleCSVData = {
+        {"Name", "Age", "City"},
+        {"Alice", "30", "New York"},
+        {"Bob", "25", "Los Angeles"},
+        {"Charlie", "35", "Chicago"}
+    };
+
+    csvFile.setData(&sampleCSVData);
+    std::cout << "Wrote to CSVFile's vector<vector<string>> data:" << std::endl;
+    csvFile.write();
+    for (const auto& row : sampleCSVData) {
+        for (const auto& cell : row) {
+            std::cout << cell << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "-------------------------------" << std::endl;
+    std::cout << "Testing CSVFile Reading" << std::endl;
+    // read it back
+    std::cout << "CSVFile path: " << csvFile.getPath() << std::endl;
+    std::cout << "Extracted filename: " << Utils::extractFileName(csvFile.getPath()) << std::endl;
+    csvFile.read();
+    std::cout << "CSVFile content:\n";
+    for (const auto& row : *(csvFile.getData())) {
+        for (const auto& cell : row) {
+            std::cout << cell << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "-------------------------------" << std::endl;
+
     return 0;
       
 }

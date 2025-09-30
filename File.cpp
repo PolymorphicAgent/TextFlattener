@@ -96,3 +96,58 @@ void BinaryFile::write() {
         throw std::runtime_error("Could not open binary file for writing: " + getPath());
     }
 }
+
+// ****************** CSVFile Implementation ******************
+
+// Constructor for CSVFile
+CSVFile::CSVFile(std::string path, std::vector<std::vector<std::string>>* data) {
+    if(!data)
+        m_data = new std::vector<std::vector<std::string>>();
+    else
+        m_data = data;
+        
+    setPath(path);
+}
+
+// Destructor for CSVFile
+CSVFile::~CSVFile() { if (m_data) delete m_data; }
+
+// Implements reading from a CSV file
+void CSVFile::read() {
+    std::ifstream file;
+    file.open(getPath(), std::ios::in);
+    if (file.is_open()) {
+        m_data->clear();
+        std::string line;
+        while (std::getline(file, line)) {
+            std::vector<std::string> row;
+            std::string cell;
+            std::stringstream lineStream(line);
+            while (std::getline(lineStream, cell, ',')) {
+                row.push_back(cell);
+            }
+            m_data->push_back(row);
+        }
+        file.close();
+    } else {
+        throw std::runtime_error("Could not open CSV file for reading: " + getPath());
+    }
+}
+
+// Implements writing to a CSV file
+void CSVFile::write() {
+    std::ofstream file;
+    file.open(getPath(), std::ios::out);
+    if (file.is_open()) {
+        for (const auto& row : *m_data) {
+            for (size_t i = 0; i < row.size(); ++i) {
+                file << row[i];
+                if (i < row.size() - 1) file << ",";
+            }
+            file << "\n";
+        }
+        file.close();
+    } else {
+        throw std::runtime_error("Could not open CSV file for writing: " + getPath());
+    }
+}

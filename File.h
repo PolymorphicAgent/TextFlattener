@@ -54,3 +54,20 @@ public:
 private:
     std::vector<bool> *m_data;
 };
+
+class CSVFile : public File {
+public:
+    // Constructors and Destructors
+    CSVFile(std::string path = "", std::vector<std::vector<std::string>>* data = nullptr);
+    ~CSVFile();
+
+    void read() override;
+
+    void write() override;
+
+    // Setters and Getters
+    std::vector<std::vector<std::string>> *getData() { return m_data; }
+    void setData(std::vector<std::vector<std::string>>* data) { m_data = data; }
+private:
+    std::vector<std::vector<std::string>> *m_data;
+};
