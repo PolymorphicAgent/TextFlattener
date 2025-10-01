@@ -6,28 +6,48 @@
 
 #include "File.h"
 
-/// @brief This class represents a dynamic compression table (aka dictionary) that will provide conversion
+/// @brief This class represents a compression table (aka dictionary) that will provide conversion
 /// @brief functions to and from shortened binary representations.
 class CompressionTable {
 public:
+    /// @brief This enum allows us to easily name what mode the program was run in.
     enum Mode {Compress, Decompress};
 
-    explicit CompressionTable(File& file, Mode mode);
+    /// @brief This is the ONLY constructor that should be used!
+    /// @param csv The CSV file to read the table from.
+    /// @param mode Whether the program is in compress or decompress mode.
+    explicit CompressionTable(CSVFile& csv, Mode mode);
 
-    File* getFile() const { return m_file; }
+    /// @brief Gets the current program mode.
+    /// @return The current program mode.
     Mode getMode() const { return m_mode; }
 
-    std::vector<bool>* getHeader() const { return m_header; }
-    void setHeader(std::vector<bool>&);
-    bool genHeader();
-
+    /// @brief Maps from binary sequences to strings.
+    /// @brief This should only be used in Decompress mode.
+    /// @param bin The binary sequence to map.
+    /// @return The string mapped to the given binary sequence.
     std::string mapBinToStr(const std::vector<bool>& bin) const;
+
+    /// @brief Maps from strings to binary sequences.
+    /// @brief This should only be used in Compress mode.
+    /// @param str The string to map.
+    /// @return The binary sequence mapped to the given string.
     std::vector<bool> mapStrToBin(const std::string& str) const;
 
 private:
-    File* m_file; // Always Read-Only
-    Mode m_mode; // Always Read-Only
-    std::vector<bool> *m_header; // Read-Only in Compress Mode, Read-Write in Decompress Mode
-    std::unordered_map<std::vector<bool>, std::string> *m_map_binStr; // Initialized in Decompress Mode ONLY
-    std::unordered_map<std::string, std::vector<bool>> *m_map_strBin; // Initialized in Compress Mode ONLY
+    /// @brief This member stores the CSV file that contains the compression table.
+    /// @note This file is always read-only.
+    CSVFile *m_csv;
+
+    /// @brief This member stores the current program mode.
+    /// @note This member is always read-only.
+    Mode m_mode;
+
+    /// @brief This member stores the mappings from binary sequences to strings.
+    /// @note This member is only initialized in Decompress mode.
+    std::unordered_map<std::vector<bool>, std::string> *m_map_binStr; 
+    
+    /// @brief This member stores the mappings from strings to binary sequences.
+    /// @note This member is only initialized in Compress mode.
+    std::unordered_map<std::string, std::vector<bool>> *m_map_strBin;
 };
