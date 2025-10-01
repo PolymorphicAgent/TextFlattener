@@ -101,11 +101,11 @@ void BinaryFile::read() {
             // Convert each byte to its 8 bits (MSB first) and append to m_data.
             //
             // Notes:
-            // - We cast `byte` to uint8_t to ensure right-shifts are logical
+            // - We cast `byte` to uint8_t to make sure that right-shifts are logical
             //   and not implementation-defined for a signed `char`.
             // - We append bits in big-endian order (most-significant bit first)
             //   so that the first pushed bit corresponds to bit 7 of the byte.
-            // - Reserving space avoids repeated reallocations when reading many bytes.
+            // - Reserving space avoids excessive reallocations when reading many bytes.
             uint8_t ubyte = static_cast<uint8_t>(byte);
             m_data->reserve(m_data->size() + 8);
 
