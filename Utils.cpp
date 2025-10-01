@@ -1,7 +1,7 @@
 #include "Utils.h"
-#include "File.h"
 
 #include <iostream>
+#include <algorithm>
 
 std::string Utils::extractFileName(std::string path){
     
@@ -96,4 +96,75 @@ void Utils::testFileIO(){
         std::cout << std::endl;
     }
     std::cout << "-------------------------------" << std::endl;
+}
+
+void Utils::testCharFreqs(){
+    std::cout << "-------------------------------" << std::endl;
+    std::cout << "Testing Character Frequency Generation" << std::endl;
+    TextFile txtFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.txt");
+    txtFile.read();
+    auto freqs = Utils::genCharFreqs(&txtFile);
+    std::cout << "Character Frequencies (as percent of total characters):" << std::endl;
+    for(const auto& pair : *freqs){
+        char tmp[] = {pair.first};
+        std::string o(tmp);
+        if(pair.first == '\n') o = "<newline>";
+        else if(pair.first == ' ') o = "<space>";
+        std::cout << "'" << o << "': " << pair.second << "%" << std::endl;
+    }
+    delete freqs; // Clean up allocated memory
+    std::cout << "-------------------------------" << std::endl;
+}
+
+/// @brief Generates the relative character frequencies for the given text file.
+/// @param file The text file to process.
+/// @return A map of characters to their percent frequency / 100
+std::vector<std::pair<char, double>>* Utils::genCharFreqs(TextFile* file){
+    // Check if the file has been read already
+    std::stringstream* fileData = file->getData();
+    if(!fileData){
+        file->read();
+        fileData = file->getData();
+    }
+
+    // If there's still no data, throw an error
+    if(!fileData){
+        throw std::runtime_error("Invalid attempt to calculate character frequencies on an empty file!");
+    }
+
+    // Initialize and define our result map
+    std::vector<std::pair<char, double>> *result = new std::vector<std::pair<char, double>>();
+    
+    // Count the occurrence of each character and keep track of total characters
+    unsigned int totalChars = 0;
+    char extracted;
+    while(fileData->get(extracted)){
+        auto it = std::find_if(result->begin(), result->end(), [&extracted](const std::pair<char, double>& l)
+            { return l.first == extracted; });
+
+        // If the character isn't already in our list, append it
+        if(it == result->end()){
+            result->push_back(std::make_pair(extracted, 1.0));
+        }
+        // Otherwise, increment that occurrence
+        else {
+            it->second++;
+        }
+        totalChars++;
+    }
+
+    // Calculate the percent makeup of each character
+    for(auto & i : *result){
+        i.second = (i.second * 100.0) / totalChars;
+    }
+
+    // Sort the vector by value
+    std::sort(result->begin(), result->end(), 
+        [](const std::pair<char, double>& l, const std::pair<char, double>& r)
+    {
+        return l.second > r.second;
+    });
+
+    return result;
+
 }
