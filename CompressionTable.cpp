@@ -1,7 +1,7 @@
 #include "CompressionTable.h"
 
-CompressionTable::CompressionTable(File* file, Mode mode) : 
-    m_file(file), m_mode(mode), m_map_binStr(nullptr), 
+CompressionTable::CompressionTable(File& file, Mode mode) : 
+    m_file(&file), m_mode(mode), m_map_binStr(nullptr), 
     m_map_strBin(nullptr), m_header(nullptr)
 {
     if(mode == Compress)

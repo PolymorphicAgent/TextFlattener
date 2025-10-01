@@ -12,7 +12,7 @@ class CompressionTable {
 public:
     enum Mode {Compress, Decompress};
 
-    explicit CompressionTable(File* file, Mode mode);
+    explicit CompressionTable(File& file, Mode mode);
 
     File* getFile() const { return m_file; }
     Mode getMode() const { return m_mode; }
