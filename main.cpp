@@ -4,9 +4,13 @@
 #include "Utils.h"
 #include "CompressionTable.h"
 
+#include "Ctxt/ctxt.h"
+
 #include <fstream>
 
 int main(int argc, char *argv[]){
+
+    demo();
     
     // Tests all the file IO functions provided in abstract class File's children
     // Utils::testFileIO();
