@@ -12,8 +12,8 @@ public:
     virtual void write() = 0;
 
     // Shared functions
-    std::string getPath() {return m_filePath;}
-    void setPath(std::string path) {m_filePath = path;}
+    std::string getPath() const { return m_filePath; }
+    void setPath(std::string path) { m_filePath = path; }
 
 private:
     std::string m_filePath;
@@ -31,7 +31,7 @@ public:
     void write() override;
 
     // Setters and Getters
-    std::stringstream* getData() { return m_data; }
+    std::stringstream* getData() const { return m_data; }
     void setData(std::stringstream* data) { m_data = data; }
 private:
     std::stringstream *m_data;
