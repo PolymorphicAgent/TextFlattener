@@ -1,7 +1,9 @@
 #include "Utils.h"
+#include "Ctxt/ctxt.h"
 
 #include <iostream>
 #include <algorithm>
+#include <string>
 
 std::string Utils::extractFileName(std::string path){
     // Find the last occurrence of '/' or '\'
@@ -15,9 +17,9 @@ std::string Utils::extractFileName(std::string path){
 }
 
 void Utils::testFileIO(){
-    std::cout << "-------------------------------" << std::endl;
-    std::cout << "Testing TextFile Writing" << std::endl;
-    std::cout << "-------------------------------" << std::endl;
+    ctxt("-------------------------------", red, false, false, true);
+    ctxt("Testing TextFile Writing", cyan, true, false, true);
+    ctxt("-------------------------------", red, false, false, true);
 
     // Create a TextFile object
     TextFile txtFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.txt");
@@ -25,26 +27,26 @@ void Utils::testFileIO(){
     // Write some data to its stringstream
     *txtFile.getData() << "Hello, World!\nThis is a test stringstream.";
 
-    std::cout << "Wrote to TextFile's stringstream data:" << std::endl;
+    ctxt("Wrote to TextFile's stringstream data:", green, false, false, true);
 
     // Write out the file
     txtFile.write();
 
     // Display the content written
-    std::cout << txtFile.getData()->str() << std::endl;
+    ctxt(txtFile.getData()->str(), yellow, false, false, true);
 
-    std::cout << "-------------------------------" << std::endl;
-    std::cout << "Testing TextFile Reading" << std::endl;
-    std::cout << "TextFile path: " << txtFile.getPath() << std::endl;
-    std::cout << "Extracted filename: " << Utils::extractFileName(txtFile.getPath()) << std::endl;
+    ctxt("-------------------------------", red, false, false, true);
+    ctxt("Testing TextFile Reading", cyan, true, false, true);
+    ctxt(std::string("TextFile path: ") + txtFile.getPath(), green, false, false, true);
+    ctxt(std::string("Extracted filename: ") + Utils::extractFileName(txtFile.getPath()), green, false, false, true);
 
     // Read the file
     txtFile.read();
 
     // Display the content read
-    std::cout << "TextFile content:\n" << txtFile.getData()->str() << std::endl;
-    std::cout << "-------------------------------" << std::endl;
-    std::cout << "Testing BinaryFile Writing" << std::endl;
+    ctxt(std::string("TextFile content:\n") + txtFile.getData()->str(), yellow, false, false, true);
+    ctxt("-------------------------------", red, false, false, true);
+    ctxt("Testing BinaryFile Writing", cyan, true, false, true);
 
     // Create a BinaryFile object
     BinaryFile binFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.bin");
@@ -53,32 +55,37 @@ void Utils::testFileIO(){
     std::vector<bool> sampleData = {1,0,1,0,1,0,1,0};
     binFile.setData(&sampleData);
 
-    std::cout << "Wrote to BinaryFile's vector<bool> data:" << std::endl;
+    ctxt("Wrote to BinaryFile's vector<bool> data:", green, false, false, true);
 
     // Write out the file
     binFile.write();
 
     // Display the content written
-    for (bool bit : sampleData) {
-        std::cout << bit;
+    {
+        std::string bits;
+        bits.reserve(sampleData.size());
+        for (bool bit : sampleData) bits.push_back(bit ? '1' : '0');
+        ctxt(bits, yellow, false, false, true);
     }
 
-    std::cout << "\n-------------------------------" << std::endl;
-    std::cout << "Testing BinaryFile Reading" << std::endl;
-    std::cout << "BinaryFile path: " << binFile.getPath() << std::endl;
-    std::cout << "Extracted filename: " << Utils::extractFileName(binFile.getPath()) << std::endl;
+    ctxt("-------------------------------", red, false, false, true);
+    ctxt("Testing BinaryFile Reading", cyan, true, false, true);
+    ctxt(std::string("BinaryFile path: ") + binFile.getPath(), green, false, false, true);
+    ctxt(std::string("Extracted filename: ") + Utils::extractFileName(binFile.getPath()), green, false, false, true);
 
     // Read the file
     binFile.read();
 
     // Display the content read
-    std::cout << "BinaryFile content (as bits): ";
-    for (bool bit : *(binFile.getData())) {
-        std::cout << bit;
+    {
+        std::string bits;
+        bits.reserve(binFile.getData()->size());
+        for (bool bit : *(binFile.getData())) bits.push_back(bit ? '1' : '0');
+        ctxt(std::string("BinaryFile content (as bits): ") + bits, yellow, false, false, true);
     }
 
-    std::cout << "\n-------------------------------" << std::endl;
-    std::cout << "Testing CSVFile Writing" << std::endl;
+    ctxt("-------------------------------", red, false, false, true);
+    ctxt("Testing CSVFile Writing", cyan, true, false, true);
 
     // Create a CSVFile object
     CSVFile csvFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.csv");
@@ -91,42 +98,43 @@ void Utils::testFileIO(){
     sampleCSVData.push_back({"Charlie", "35", "Chicago"});
     csvFile.setData(&sampleCSVData);
 
-    std::cout << "Wrote to CSVFile's vector<vector<string>> data:" << std::endl;
+    ctxt("Wrote to CSVFile's vector<vector<string>> data:", green, false, false, true);
 
     // Write out the file
     csvFile.write();
 
     // Display the content written
     for (const auto& row : sampleCSVData) {
+        std::string line;
         for (const auto& cell : row) {
-            std::cout << cell << " ";
+            line += cell + " ";
         }
-        std::cout << std::endl;
+        ctxt(line, yellow, false, false, true);
     }
 
-    std::cout << "-------------------------------" << std::endl;
-    std::cout << "Testing CSVFile Reading" << std::endl;
-    std::cout << "CSVFile path: " << csvFile.getPath() << std::endl;
-    std::cout << "Extracted filename: " << Utils::extractFileName(csvFile.getPath()) << std::endl;
+    ctxt("-------------------------------", red, false, false, true);
+    ctxt("Testing CSVFile Reading", cyan, true, false, true);
+    ctxt(std::string("CSVFile path: ") + csvFile.getPath(), green, false, false, true);
+    ctxt(std::string("Extracted filename: ") + Utils::extractFileName(csvFile.getPath()), green, false, false, true);
 
     // Read the file
     csvFile.read();
 
     // Display the content read
-    std::cout << "CSVFile content:\n";
     for (const auto& row : *(csvFile.getData())) {
-        for (const auto cell : row) {
-            std::cout << cell << " ";
+        std::string line;
+        for (const auto& cell : row) {
+            line += cell + " ";
         }
-        std::cout << std::endl;
+        ctxt(line, yellow, false, false, true);
     }
 
-    std::cout << "-------------------------------" << std::endl;
+    ctxt("-------------------------------", red, false, false, true);
 }
 
 void Utils::testCharFreqs(){
-    std::cout << "-------------------------------" << std::endl;
-    std::cout << "Testing Character Frequency Generation" << std::endl;
+    ctxt("-------------------------------", red, false, false, true);
+    ctxt("Testing Character Frequency Generation (sample.txt)", cyan, true, false, true);
 
     // Create and read a TextFile
     TextFile txtFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.txt");
@@ -136,23 +144,21 @@ void Utils::testCharFreqs(){
     auto freqs = Utils::genCharFreqs(&txtFile);
 
     // Display the frequencies
-    std::cout << "Character Frequencies (as percent of total characters):" << std::endl;
+    ctxt("Character Frequencies (as percent of total characters):", green, false, false, true);
     for(const auto& pair : *freqs){
-
         // For better readability, represent newline and space characters with special labels
-        char tmp[] = {pair.first, '\0'};
-        std::string o(tmp);
+        std::string o(1, pair.first);
         if(pair.first == '\n') o = "<newline>";
         else if(pair.first == ' ') o = "<space>";
 
-        // Write to cout
-        std::cout << "'" << o << "': " << pair.second << "%" << std::endl;
+        // Write to console in white
+        ctxt(std::string("'") + o + "': " + std::to_string(pair.second) + "%", yellow, false, false, true);
     }
 
     // Clean up allocated memory
     delete freqs; 
 
-    std::cout << "-------------------------------" << std::endl;
+    ctxt("-------------------------------", red, false, false, true);
 }
 
 std::vector<std::pair<char, double>>* Utils::genCharFreqs(TextFile* file){

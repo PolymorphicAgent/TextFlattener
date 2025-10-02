@@ -9,8 +9,6 @@
 #include <fstream>
 
 int main(int argc, char *argv[]){
-
-    demo();
     
     // Tests all the file IO functions provided in abstract class File's children
     // Utils::testFileIO();
@@ -20,8 +18,11 @@ int main(int argc, char *argv[]){
 
     // If the program was not run with exactly 2 or 3 arguments, print usage message and exit
     if(argc != 3 && argc != 2){
-        std::cerr << "\nUsage: \n\n" << argv[0] << " <mode> <input file>\n\n";
-        std::cerr << "  <mode>: \n\n    c ---- Compression mode\n    d ---- Decompression mode\n    gc --- Generate character frequencies mode\n    gw --- Generate word frequencies mode\n    help - Display more detailed information about modes\n\n";
+        // Print usage in red to indicate an error/incorrect invocation
+        ctxt("\nUsage: \n\n", red, false, false, false);
+        ctxt(std::string(argv[0]) + " <mode> <input file>\n", green, false, false, true);
+        ctxt("  <mode>: \n\n    c ---- Compression mode\n    d ---- Decompression mode\n    gc --- Generate character frequencies mode\n    gw --- Generate word frequencies mode\n    help - Display more detailed information about modes\n    test - Execute test functions", yellow, false, false, true);
+        
         return 1;
     }
 
@@ -29,42 +30,55 @@ int main(int argc, char *argv[]){
     std::string mode = argv[1];
 
     if(mode == "help"){
-        std::cout << "\nUsage: \n\n" << argv[0] << " <mode> <input file>\n\n";
+        // Use colored headings and descriptions for readability
+        ctxt("\nUsage: \n\n", cyan, true, false, false);
+        ctxt(std::string(argv[0]) + " <mode> <input file>\n", green, false, false, true);
 
-        std::cout << "\nDetailed Mode Information:\n\n";
+        ctxt("Detailed Mode Information:\n\n", red, true, false, false);
 
-        std::cout << "  Compression Mode (c):\n";
-        std::cout << "    Compresses the input text file using a predefined compression table.\n";
-        std::cout << "    Example: " << argv[0] << " c input.txt\n";
-        std::cout << "      Output files generated:\n";
-        std::cout << "        - input.bin: The compressed binary output file.\n\n";
+        ctxt("  Compression Mode (c):\n", dark_green, false, false, false);
+        ctxt("    Compresses the input text file using a predefined compression table.\n", blue, false, false, false);
+        ctxt(std::string("    Example: ") + argv[0] + " c input.txt\n", magenta, false, false, false);
+        ctxt("      Output files generated:\n", magenta, false, false, false);
+        ctxt("        - input.bin: The compressed binary output file.\n\n", yellow, false, false, true);
 
-        std::cout << "  Decompression Mode (d):\n";
-        std::cout << "    Decompresses the input binary file using a predefined compression table.\n";
-        std::cout << "    Example: " << argv[0] << " d input.bin\n";
-        std::cout << "      Output files generated:\n";
-        std::cout << "        - input.txt: The decompressed text output file.\n\n";
+        ctxt("  Decompression Mode (d):\n", dark_green, false, false, false);
+        ctxt("    Decompresses the input binary file using a predefined compression table.\n", blue, false, false, false);
+        ctxt(std::string("    Example: ") + argv[0] + " d input.bin\n", magenta, false, false, false);
+        ctxt("      Output files generated:\n", magenta, false, false, false);
+        ctxt("        - input.txt: The decompressed text output file.\n\n", yellow, false, false, true);
 
-        std::cout << "  Generate Character Frequencies Mode (gc):\n";
-        std::cout << "    Analyzes the input text file and generates a frequency table of characters.\n";
-        std::cout << "    Example: " << argv[0] << " gc input.txt\n";
-        std::cout << "      Output files generated:\n";
-        std::cout << "        - input_char_freqs.csv: A CSV file listing each character and its frequency percentage.\n\n";
+        ctxt("  Generate Character Frequencies Mode (gc):\n", dark_green, false, false, false);
+        ctxt("    Analyzes the input text file and generates a frequency table of characters.\n", blue, false, false, false);
+        ctxt(std::string("    Example: ") + argv[0] + " gc input.txt\n", magenta, false, false, false);
+        ctxt("      Output files generated:\n", magenta, false, false, false);
+        ctxt("        - input_char_freqs.csv: A CSV file listing each character and its frequency percentage.\n\n", yellow, false, false, true);
 
-        std::cout << "  Generate Word Frequencies Mode (gw):\n";
-        std::cout << "    Analyzes the input text file and generates a frequency table of words.\n";
-        std::cout << "    Example: " << argv[0] << " gw input.txt\n";
-        std::cout << "      Output files generated:\n";
-        std::cout << "        - input_word_freqs.csv: A CSV file listing each word and its frequency percentage.\n\n";
+        ctxt("  Generate Word Frequencies Mode (gw):\n", dark_green, false, false, false);
+        ctxt("    Analyzes the input text file and generates a frequency table of words.\n", blue, false, false, false);
+        ctxt(std::string("    Example: ") + argv[0] + " gw input.txt\n", magenta, false, false, false);
+        ctxt("      Output files generated:\n", magenta, false, false, false);
+        ctxt("        - input_word_freqs.csv: A CSV file listing each word and its frequency percentage.\n\n", yellow, false, false, true);
 
-        std::cout << "  Help Mode (help):\n";
-        std::cout << "    Displays this detailed usage information.\n\n";
+        ctxt("  Help Mode (help):\n", dark_green, false, false, false);
+        ctxt("    Displays this detailed usage information.\n", magenta, false, false, true);
 
-        std::cout << "Note:\n";
-        std::cout << "  - Make sure that the input files exist and are accessible.\n";
-        std::cout << "  - The program will generate output files in the same directory as the input file.\n";
-        std::cout << "  - The compression and decompression modes rely on a predefined compression table file 'table.csv'.\n\n";
+        ctxt("  Test Mode (test):\n", dark_green, false, false, false);
+        ctxt("    Executes built-in test functions to validate file I/O and frequency analysis functionalities.\n", magenta, false, false, false);
+        ctxt(std::string("    Example: ") + argv[0] + " test\n", magenta, false, false, true);
 
+        ctxt("Note:\n", dark_red, true, false, false);
+        ctxt("  - Make sure that the input files exist and are accessible.\n", yellow, false, false, false);
+        ctxt("  - The program will generate output files in the same directory as the input file.\n", yellow, false, false, false);
+        ctxt("  - The compression and decompression modes rely on a predefined compression table file 'table.csv'.\n", yellow, false, false, true);
+
+        return 0;
+    }
+
+    // If the user requested to run tests, execute the test functions and exit
+    if(mode == "test"){
+        Utils::testFileIO();
+        Utils::testCharFreqs();
         return 0;
     }
 
