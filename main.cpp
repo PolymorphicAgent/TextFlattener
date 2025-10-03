@@ -7,6 +7,7 @@
 #include "Ctxt/ctxt.h"
 
 #include <fstream>
+#include <algorithm>
 
 int main(int argc, char *argv[]){
 
@@ -80,9 +81,88 @@ int main(int argc, char *argv[]){
         }
 
         std::string outputFilePath = inputFileNameNoExt + ".bin";
-        // TODO: Implement compression logic here using compTable
 
-        //ctxt(std::string("\nSuccessfully compressed '") + inputFileName + "' to '" + outputFilePath + "'.\n", green, false, false, true);
+        CompressionTable table(csvCompTable, CompressionTable::Compress);
+
+        // Iterate through the text file word by word
+        std::string word;
+        std::vector<bool> finalBinary;
+        while(*txtFile.getData() >> word){
+            
+            // Get the pure word (without punctuation, but with apostrophes)
+            std::string pureWord = word;
+            
+            pureWord.erase(std::remove_if(pureWord.begin(), pureWord.end(), [](char i){ return ::ispunct(static_cast<unsigned char>(i)) && i != '\''; }), pureWord.end());
+
+            // Check if the word is part of our table
+            std::vector<bool> wordBinRep;
+            try {
+                wordBinRep = table.mapStrToBin(pureWord);
+            } catch (const std::exception &e) {
+                ctxt(std::string("\nError mapping to binary: ") + e.what(), red, false, false, true);
+                return 1;
+            }
+
+            // If the word is part of our table
+            if(wordBinRep.size() != 0){
+                
+                // Determine and build the binary vector for this part (keeping in mind any punctuation)
+                for(unsigned int i = 0; i < wordBinRep.size(); i++){
+
+                    // Check if this index is the beginning of our pure word
+                    if(word.substr(i) == pureWord)
+                        // Append the binary bits for this word to the built vector
+                        finalBinary.insert(finalBinary.end(), wordBinRep.begin(), wordBinRep.end());
+
+                    // Otherwise simply append the binary value for the current character
+                    else {
+
+                        // Attempt to map the character to a binary value
+                        try {
+                            std::vector<bool> tmp = table.mapStrToBin(std::string(1, word.at(i)));
+
+                            // Append the binary values to the built vector
+                            finalBinary.insert(finalBinary.end(), tmp.begin(), tmp.end());
+
+                        } catch (const std::exception &e) {
+                            ctxt(std::string("\nError mapping to binary: ") + e.what(), red, false, false, true);
+                            return 1;
+                        }
+                    }
+                }
+            }
+
+            // Otherwise, simply iterate through each character and append binary mappings
+            else {
+                for(char i : word){
+
+                    // Attempt to map the character to a binary value
+                    try {
+                        std::vector<bool> tmp = table.mapStrToBin(std::string(1, i));
+
+                        // Append the binary values to the built vector
+                        finalBinary.insert(finalBinary.end(), tmp.begin(), tmp.end());
+
+                    } catch (const std::exception &e) {
+                        ctxt(std::string("\nError mapping to binary: ") + e.what(), red, false, false, true);
+                        return 1;
+                    }
+                }
+            }
+        }
+        
+        // Write the binary vector to the file
+        BinaryFile binOut(inputFileNameNoExt + ".bin");
+        binOut.setData(&finalBinary);
+
+        try {
+            binOut.write();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError writing to binary file: ") + e.what(), red, false, false, true);
+            return 1;
+        }
+
+        ctxt(std::string("\nSuccessfully compressed '") + inputFileName + "' to '" + outputFilePath + "'.\n", green, false, false, true);
     }
 
     // Handle decompression mode
@@ -256,5 +336,7 @@ int main(int argc, char *argv[]){
     - https://www.geeksforgeeks.org/dsa/little-and-big-endian-mystery/
     - https://www.w3schools.com/c/c_bitwise_operators.php
 
+    MISC.
+    - https://www.geeksforgeeks.org/cpp/how-to-append-a-vector-to-a-vector-in-cpp/
 
 */
