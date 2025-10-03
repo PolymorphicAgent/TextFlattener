@@ -40,7 +40,7 @@ int main(int argc, char *argv[]){
 
     // For other modes, make sure an input file argument was provided
     if(argc != 3){
-        ctxt("Error: Input file argument is required for mode '"+mode+"'.\n", red, false, false, true);
+        ctxt("\nError: Input file argument is required for mode '"+mode+"'.", red, false, false, true);
         Utils::printUsage(argv);
         return 1;
     }
@@ -53,9 +53,18 @@ int main(int argc, char *argv[]){
     // Handle compression mode
     if(mode == "c"){
 
-        // Ensure the input file is a .txt file
+        // Make sure the input file is a .txt file
         if(inputFileExt != "txt"){
             ctxt("\nError: Compression mode requires a .txt input file.\n", red, false, false, true);
+            return 1;
+        }
+
+        // Check if table.csv exists in the current directory
+        CSVFile csvCompTable("table.csv");
+        try {
+            csvCompTable.read();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError: Could not read 'table.csv'. Make sure it exists in the current directory.\n"), red, false, false, true);
             return 1;
         }
 
@@ -70,17 +79,101 @@ int main(int argc, char *argv[]){
             return 1;
         }
 
-        // Create a CompressionTable object
-        // CompressionTable compTable;
-
-        // Create a BinaryFile object for the output compressed file
         std::string outputFilePath = inputFileNameNoExt + ".bin";
-        BinaryFile binFile(outputFilePath);
-
-        // Compress the text data and write to the binary file
         // TODO: Implement compression logic here using compTable
 
         //ctxt(std::string("\nSuccessfully compressed '") + inputFileName + "' to '" + outputFilePath + "'.\n", green, false, false, true);
+    }
+
+    // Handle decompression mode
+    else if(mode == "d"){
+
+        // Make sure that the input file is a .bin file
+        if(inputFileExt != "bin"){
+            ctxt("\nError: Decompression mode requires a .bin input file.\n", red, false, false, true);
+            return 1;
+        }
+
+        // Check if table.csv exists in the current directory
+        CSVFile csvCompTable("table.csv");
+        try {
+            csvCompTable.read();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError: Could not read 'table.csv'. Make sure it exists in the current directory.\n"), red, false, false, true);
+            return 1;
+        }
+
+        // Create a BinaryFile object for the input file
+        BinaryFile binFile(inputFilePath);
+
+        // Read the content of the binary file
+        try {
+            binFile.read();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError reading input file: ") + e.what() + "\n", red, false, false, true);
+            return 1;
+        }
+
+        std::string outputFilePath = inputFileNameNoExt + ".txt";
+        //TODO: Implement decompression logic here using compTable
+    }
+
+    // Handle generate character frequencies mode
+    else if(mode == "gc"){
+
+        // Make sure the input file is a .txt file
+        if(inputFileExt != "txt"){
+            ctxt("\nError: Generate character frequencies mode requires a .txt input file.\n", red, false, false, true);
+            return 1;
+        }
+
+        // Create a TextFile object for the input file
+        TextFile txtFile(inputFilePath);
+
+        // Read the content of the text file
+        try {
+            txtFile.read();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError reading input file: ") + e.what() + "\n", red, false, false, true);
+            return 1;
+        }
+
+        // Generate character frequencies
+        auto freqs = Utils::genCharFreqs(&txtFile);
+
+        // Write frequencies to a CSV file
+        std::string outputFilePath = inputFileNameNoExt + "_char_freqs.csv";
+        CSVFile freqFile(outputFilePath);
+        std::vector<std::vector<std::string>> freqData;
+
+        // Prepare data for CSV
+        freqData.emplace_back(std::vector<std::string>{"Character", "Frequency (%)"});
+
+        // Populate frequency data
+        for(const auto& pair : *freqs){
+            std::string charStr(1, pair.first);
+            if(pair.first == '\n') charStr = "<newline>";
+            else if(pair.first == ' ') charStr = "<space>";
+            else if(pair.first == ',') charStr = "\",\"";
+            freqData.emplace_back(std::vector<std::string>{charStr, std::to_string(pair.second)});
+        }
+
+        // Set data
+        freqFile.setData(&freqData);
+
+        // Write to CSV file
+        try {
+            freqFile.write();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError writing frequency file: ") + e.what() + "\n", red, false, false, true);
+            delete freqs;
+            return 1;
+        }
+
+        // Clean up allocated memory
+        delete freqs; 
+
+        ctxt(std::string("\nSuccessfully generated character frequencies and wrote to '") + outputFilePath + "'.\n", green, false, false, true);
     }
 
     return 0;
