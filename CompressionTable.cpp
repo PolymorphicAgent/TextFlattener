@@ -89,6 +89,9 @@ std::string CompressionTable::mapBinToStr(const std::vector<bool>& bin) const {
     if(m_mode == Compress)
         throw std::runtime_error("Invalid attempt to map binary to string in compress mode!");
 
+    if(bin.size() == 0)
+        throw std::runtime_error("Invalid attempt to map empty binary vector!");
+
     // Look up the binary sequence in the map
     auto it = m_map_binStr->find(bin);
 
@@ -96,15 +99,18 @@ std::string CompressionTable::mapBinToStr(const std::vector<bool>& bin) const {
     if(it != m_map_binStr->end())
         return it->second;
 
-    // If not found, throw an error
+    // If not found
     else {
 
-        // For easier debugging, we can print the binary sequence that was not found
-        std::string binStr;
-        for(bool b : bin)
-            binStr += (b ? '1' : '0');
+        // If unknown, return a "#"
+        return "#";
 
-        throw std::runtime_error("Binary sequence not found in compression table! (length: " + std::to_string(bin.size()) + ", sequence: " + binStr + ")");
+        // For easier debugging, we can print the binary sequence that was not found
+        // std::string binStr;
+        // for(bool b : bin)
+        //     binStr += (b ? '1' : '0');
+
+        // throw std::runtime_error("Binary sequence not found in compression table! (length: " + std::to_string(bin.size()) + ", sequence: " + binStr + ")");
     }
     
 }
@@ -114,6 +120,10 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
     if(m_mode == Decompress)
         throw std::runtime_error("Invalid attempt to map string to binary in decompress mode!");
 
+    // Verify that an empty string was not passed
+    if(str == "")
+        throw std::runtime_error("Invalid attempt to map empty string!");
+
     // Look up the string in the map
     auto it = m_map_strBin->find(str);
 
@@ -121,7 +131,24 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
     if(it != m_map_strBin->end())
         return it->second;
 
-    // If not found, throw an error
-    else
-        throw std::runtime_error("String not found in compression table! (string: " + str + ")");
+    // If not found
+    else {
+
+        // If we are matching a word, return an empty vector to signify that there's no binary representation for that word
+        if(str.length() > 1) return std::vector<bool>();
+
+        // If we are matching a character, attempt to map it to a '#'
+        else if(str.length() == 1) {
+
+            // Lookup the binary for the '#' character and return it
+            auto it1 = m_map_strBin->find("#");
+
+            // If found, return the corresponding binary sequence
+            if(it1 != m_map_strBin->end())
+                return it1->second;
+            
+            // If not found, throw an error
+            throw std::runtime_error("'#' not found in the compression table "+m_csv->getPath());
+        }
+    }
 }
