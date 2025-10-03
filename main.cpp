@@ -59,15 +59,6 @@ int main(int argc, char *argv[]){
             return 1;
         }
 
-        // Check if table.csv exists in the current directory
-        CSVFile csvCompTable("table.csv");
-        try {
-            csvCompTable.read();
-        } catch (const std::exception &e) {
-            ctxt(std::string("\nError: Could not read 'table.csv'. Make sure it exists in the current directory.\n"), red, false, false, true);
-            return 1;
-        }
-
         // Create a TextFile object for the input file
         TextFile txtFile(inputFilePath);
 
@@ -76,6 +67,15 @@ int main(int argc, char *argv[]){
             txtFile.read();
         } catch (const std::exception &e) {
             ctxt(std::string("\nError reading input file: ") + e.what() + "\n", red, false, false, true);
+            return 1;
+        }
+
+        // Check if table.csv exists in the current directory
+        CSVFile csvCompTable("table.csv");
+        try {
+            csvCompTable.read();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError: Could not read 'table.csv'. Make sure it exists in the current directory.\n"), red, false, false, true);
             return 1;
         }
 
@@ -94,15 +94,6 @@ int main(int argc, char *argv[]){
             return 1;
         }
 
-        // Check if table.csv exists in the current directory
-        CSVFile csvCompTable("table.csv");
-        try {
-            csvCompTable.read();
-        } catch (const std::exception &e) {
-            ctxt(std::string("\nError: Could not read 'table.csv'. Make sure it exists in the current directory.\n"), red, false, false, true);
-            return 1;
-        }
-
         // Create a BinaryFile object for the input file
         BinaryFile binFile(inputFilePath);
 
@@ -111,6 +102,15 @@ int main(int argc, char *argv[]){
             binFile.read();
         } catch (const std::exception &e) {
             ctxt(std::string("\nError reading input file: ") + e.what() + "\n", red, false, false, true);
+            return 1;
+        }
+
+        // Check if table.csv exists in the current directory
+        CSVFile csvCompTable("table.csv");
+        try {
+            csvCompTable.read();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError: Could not read 'table.csv'. Make sure it exists in the current directory.\n"), red, false, false, true);
             return 1;
         }
 
