@@ -256,8 +256,8 @@ std::vector<std::pair<std::string, double>>* Utils::genWordFreqs(TextFile* file)
     std::string word;
     while(*file->getData() >> word){
 
-        // make sure it's just the word, no punctuation
-        word.erase(std::remove_if(word.begin(), word.end(), ::ispunct), word.end());
+        // make sure it's just the word, no punctuation except '
+        word.erase(std::remove_if(word.begin(), word.end(), [](char i){ return ::ispunct(static_cast<unsigned char>(i)) && i != '\''; }), word.end());
 
         // See if we've already encountered this word
         auto it = std::find_if(result->begin(), result->end(), [&word](const std::pair<std::string, double>& l)
