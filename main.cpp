@@ -176,6 +176,64 @@ int main(int argc, char *argv[]){
         ctxt(std::string("\nSuccessfully generated character frequencies and wrote to '") + outputFilePath + "'.\n", green, false, false, true);
     }
 
+    // Handle generate word frequencies mode
+    else if(mode == "gw"){
+
+        // Make sure the input file is a .txt file
+        if(inputFileExt != "txt"){
+            ctxt("\nError: Generate word frequencies mode requires a .txt input file.\n", red, false, false, true);
+            return 1;
+        }
+
+        // Create a TextFile object for the input file
+        TextFile txtFile(inputFilePath);
+
+        // Read the content of the text file
+        try {
+            txtFile.read();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError reading input file: ") + e.what() + "\n", red, false, false, true);
+            return 1;
+        }
+
+        // Generate word frequencies
+        auto freqs = Utils::genWordFreqs(&txtFile);
+
+        // Write frequencies to a CSV file
+        std::string outputFilePath = inputFileNameNoExt + "_word_freqs.csv";
+        CSVFile freqFile(outputFilePath);
+        std::vector<std::vector<std::string>> freqData;
+
+        // Prepare data for CSV
+        freqData.emplace_back(std::vector<std::string>{"Word", "Frequency (%)"});
+
+        // Populate frequency data
+        for(const auto& pair : *freqs){
+            std::string wordStr = pair.first;
+            if(wordStr.find(',') != std::string::npos){
+                wordStr = "\"" + wordStr + "\""; // Escape commas in words
+            }
+            freqData.emplace_back(std::vector<std::string>{wordStr, std::to_string(pair.second)});
+        }
+
+        // Set data
+        freqFile.setData(&freqData);
+
+        // Write to CSV file
+        try {
+            freqFile.write();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError writing frequency file: ") + e.what() + "\n", red, false, false, true);
+            delete freqs;
+            return 1;
+        }
+
+        // Clean up allocated memory
+        delete freqs; 
+
+        ctxt(std::string("\nSuccessfully generated word frequencies and wrote to '") + outputFilePath + "'.\n", green, false, false, true);
+    }
+
     return 0;
       
 }
