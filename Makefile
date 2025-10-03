@@ -11,7 +11,7 @@
 # 	g++ -g -o main $(sources) -std=c++20
 
 CXX := g++
-CXXFLAGS := -std=c++20 -g -Wall -Wextra
+CXXFLAGS := -std=c++20 -Wall -Wextra
 SRCS := main.cpp Utils.cpp File.cpp CompressionTable.cpp Ctxt/ctxt.cpp
 HEADERS := Utils.h File.h CompressionTable.h Ctxt/ctxt.h
 
