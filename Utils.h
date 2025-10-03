@@ -40,6 +40,13 @@ class Utils {
         /// @note The caller is responsible for deleting the returned map.
         static std::vector<std::pair<char, double>>* genCharFreqs(TextFile*);
 
+
+        /// @brief Generates the relative word frequencies for the given text file.
+        /// @param file The text file to process.
+        /// @return A map of words to their percent frequency / 100.
+        /// @note The caller is responsible for deleting the returned map.
+        static std::vector<std::pair<std::string, double>>* genWordFreqs(TextFile*);
+
         // ***************** PRINTING UTILITIES *****************
 
         /// @brief Prints the usage information for the program.

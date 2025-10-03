@@ -238,6 +238,58 @@ std::vector<std::pair<char, double>>* Utils::genCharFreqs(TextFile* file){
     return result;
 }
 
+std::vector<std::pair<std::string, double>>* Utils::genWordFreqs(TextFile* file){
+
+    // Check if the file has been read
+    if(file->getData() == nullptr)
+        file->read();
+
+    // Check if reading was successful
+    if(file->getData() == nullptr)
+        throw std::runtime_error("Invalid attempt to calculate word frequencies on an empty file!");
+
+    // Initialize and define our result map
+    std::vector<std::pair<std::string, double>> *result = new std::vector<std::pair<std::string, double>>();
+    
+    // Count the occurrence of each word and keep track of total words
+    unsigned int totalWords = 0;
+    std::string word;
+    while(*file->getData() >> word){
+
+        // See if we've already encountered this word
+        auto it = std::find_if(result->begin(), result->end(), [&word](const std::pair<std::string, double>& l)
+            { return l.first == word; });
+
+        // If the word isn't already in our list, append it
+        if(it == result->end()){
+            result->push_back(std::make_pair(word, 1.0));
+        }
+
+        // Otherwise, increment that occurrence
+        else {
+            it->second++;
+        }
+
+        // Increment total word count
+        totalWords++;
+    }
+
+    // Calculate the percent makeup of each word
+    for(auto & i : *result){
+        i.second = (i.second * 100.0) / totalWords;
+    }
+
+    // Sort the vector by value
+    std::sort(result->begin(), result->end(), 
+        [](const std::pair<std::string, double>& l, const std::pair<std::string, double>& r)
+    {
+        return l.second > r.second;
+    });
+
+    // Done!
+    return result;
+}
+
 // ****************** PRINTING UTILITIES *****************
 
 void Utils::printUsage(char* argv[]){
