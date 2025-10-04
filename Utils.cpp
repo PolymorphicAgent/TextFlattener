@@ -259,6 +259,12 @@ std::vector<std::pair<std::string, double>>* Utils::genWordFreqs(TextFile* file)
         // make sure it's just the word, no punctuation except '
         word.erase(std::remove_if(word.begin(), word.end(), [](char i){ return ::ispunct(static_cast<unsigned char>(i)) && i != '\''; }), word.end());
 
+        // deal with edge case: "that's", "that'd" strip after apostrophe if it's the last character
+        if(word.length() > 2 && word[word.length() - 2] == '\''){
+            if(word == "wouldn't") word = "would";
+            else word = word.substr(0, word.length() - 2);
+        }
+
         // See if we've already encountered this word
         auto it = std::find_if(result->begin(), result->end(), [&word](const std::pair<std::string, double>& l)
             { return l.first == word; });
