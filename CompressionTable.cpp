@@ -150,5 +150,8 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
             // If not found, throw an error
             throw std::runtime_error("'#' not found in the compression table "+m_csv->getPath());
         }
+        else {
+            throw std::runtime_error("Invalid string length in mapStrToBin!");
+        }
     }
 }
