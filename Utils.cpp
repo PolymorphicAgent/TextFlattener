@@ -261,8 +261,9 @@ std::vector<std::pair<std::string, double>>* Utils::genWordFreqs(TextFile* file)
 
         // deal with edge case: "that's", "that'd" strip after apostrophe if it's the last character
         if(word.length() > 2 && word[word.length() - 2] == '\''){
-            if(word == "wouldn't") word = "would";
-            else word = word.substr(0, word.length() - 2);
+            
+            // if(word == "wouldn't") word = "would";
+            if(word.at(word.length()-1) == 's') word = word.substr(0, word.length() - 2);
         }
 
         // See if we've already encountered this word
