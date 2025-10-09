@@ -63,6 +63,14 @@ class Utils {
         /// @note If the files are of different lengths, the accuracy will be less than 100.0.
         static double genAccuracy(TextFile*, TextFile*);
 
+        /// @brief Generates the percent reduction in size from the original text file to the compressed binary file.
+        /// @param original The original text file.
+        /// @param compressed The compressed binary file.
+        /// @return The percent reduction in size (0.0 to 100.0).
+        /// @note If the compressed file is larger than the original, the percent reduction will be negative.
+        /// @note This function assumes that the text file uses 1 byte per character.
+        static double genPercentReduction(TextFile*, BinaryFile*);
+
         // ***************** PRINTING UTILITIES *****************
 
         /// @brief Prints the usage information for the program.

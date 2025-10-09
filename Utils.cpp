@@ -1,5 +1,6 @@
 #include "Utils.h"
 #include "Ctxt/ctxt.h"
+#include "CompressionTable.h"
 
 #include <iostream>
 #include <algorithm>
@@ -389,6 +390,39 @@ double Utils::genAccuracy(TextFile* original, TextFile* decompressed){
     // Calculate accuracy as a percentage
     if(totalChars == 0) return 100.0; // Both files are empty, consider them perfectly accurate
     return (static_cast<double>(matchingChars) / static_cast<double>(totalChars)) * 100.0;
+}
+
+double Utils::genPercentReduction(TextFile* original, BinaryFile* compressed){
+
+    // Check if the files have been read
+    if(original->getData() == nullptr)
+        original->read();
+    if(compressed->getData() == nullptr)
+        compressed->read();
+
+    // Check if reading was successful
+    if(original->getData() == nullptr || compressed->getData() == nullptr)
+        throw std::runtime_error("Invalid attempt to calculate percent reduction on an empty file(s)!");
+
+    // Reset stringstream position to the beginning
+    original->getData()->clear();
+    original->getData()->seekg(0, std::ios::beg);
+
+    // Calculate number of original characters
+    unsigned int numOriginalChars = 0;
+    char originalChar;
+    while(original->getData()->get(originalChar)){
+        numOriginalChars++;
+    }
+
+    // Get the number of bits in compressed file
+    unsigned int numCompressedBits = compressed->getData()->size();
+
+    // Use the provided formula to calculate percent reduction
+    // 100*(8*(numOriginalChars - numCompressedBits)/(8*numOriginalChars))
+    if(numOriginalChars == 0) return 0.0; // Avoid division by zero, no reduction possible on empty original
+    return 100.0 * (8.0 * (static_cast<double>(numOriginalChars) - static_cast<double>(numCompressedBits)) / (8.0 * static_cast<double>(numOriginalChars)));
+
 }
 
 // ****************** PRINTING UTILITIES *****************
