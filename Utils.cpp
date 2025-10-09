@@ -47,7 +47,7 @@ void Utils::testFileIO(){
     ctxt("-------------------------------", red, false, false, true);
 
     // Create a TextFile object
-    TextFile txtFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.txt");
+    TextFile txtFile("sample.txt");
 
     // Write some data to its stringstream
     *txtFile.getData() << "Hello, World!\nThis is a test stringstream.";
@@ -74,10 +74,10 @@ void Utils::testFileIO(){
     ctxt("Testing BinaryFile Writing", cyan, true, false, true);
 
     // Create a BinaryFile object
-    BinaryFile binFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.bin");
+    BinaryFile binFile("sample.bin");
 
     // Write some data to its vector<bool>
-    std::vector<bool> sampleData = {1,0,1,0,1,0,1,0};
+    std::vector<bool> sampleData = {1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,0,0,0,0,0};
     binFile.setData(&sampleData);
 
     ctxt("Wrote to BinaryFile's vector<bool> data:", green, false, false, true);
@@ -113,7 +113,7 @@ void Utils::testFileIO(){
     ctxt("Testing CSVFile Writing", cyan, true, false, true);
 
     // Create a CSVFile object
-    CSVFile csvFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.csv");
+    CSVFile csvFile("sample.csv");
 
     // Write some data to its vector<vector<string>*>
     std::vector<std::vector<std::string>> sampleCSVData;
@@ -162,7 +162,7 @@ void Utils::testCharFreqs(){
     ctxt("Testing Character Frequency Generation (sample.txt)", cyan, true, false, true);
 
     // Create and read a TextFile
-    TextFile txtFile("C:/Users/Peter/Documents/ECS 101/Project 1/sample.txt");
+    TextFile txtFile("sample.txt");
     txtFile.read();
 
     // Generate character frequencies
@@ -182,6 +182,55 @@ void Utils::testCharFreqs(){
 
     // Clean up allocated memory
     delete freqs; 
+
+    ctxt("-------------------------------", red, false, false, true);
+}
+
+void Utils::testWordFreqs(){
+    ctxt("-------------------------------", red, false, false, true);
+    ctxt("Testing Word Frequency Generation (sample.txt)", cyan, true, false, true);
+
+    // Create and read a TextFile
+    TextFile txtFile("sample.txt");
+    txtFile.read();
+
+    // Generate word frequencies
+    auto freqs = Utils::genWordFreqs(&txtFile);
+
+    // Display the frequencies
+    ctxt("Word Frequencies (as percent of total words):", green, false, false, true);
+    for(const auto& pair : *freqs){
+        std::string wordStr = pair.first;
+        if(wordStr.find(',') != std::string::npos){
+            wordStr = "\"" + wordStr + "\""; // Escape commas in words
+        }
+        // Write to console in white
+        ctxt(std::string("'") + wordStr + "': " + std::to_string(pair.second) + "%", yellow, false, false, true);
+    }
+
+    // Clean up allocated memory
+    delete freqs; 
+
+    ctxt("-------------------------------", red, false, false, true);
+}
+
+void Utils::testAccuracy(){
+    ctxt("-------------------------------", red, false, false, true);
+    ctxt("Testing Accuracy Generation (sample.txt vs. sample_copy.txt)", cyan, true, false, true);
+
+    // Create and read the original TextFile
+    TextFile original("sample.txt");
+    original.read();
+
+    // Create and read the decompressed TextFile
+    TextFile decompressed("sample_copy.txt");
+    decompressed.read();
+
+    // Generate accuracy
+    double accuracy = Utils::genAccuracy(&original, &decompressed);
+
+    // Display the accuracy
+    ctxt("Accuracy of identical files: " + std::to_string(accuracy) + "%", green, false, false, true);
 
     ctxt("-------------------------------", red, false, false, true);
 }
@@ -261,7 +310,7 @@ std::vector<std::pair<std::string, double>>* Utils::genWordFreqs(TextFile* file)
 
         // deal with edge case: "that's", "that'd" strip after apostrophe if it's the last character
         if(word.length() > 2 && word[word.length() - 2] == '\''){
-            
+
             // if(word == "wouldn't") word = "would";
             if(word.at(word.length()-1) == 's') word = word.substr(0, word.length() - 2);
         }
@@ -300,13 +349,55 @@ std::vector<std::pair<std::string, double>>* Utils::genWordFreqs(TextFile* file)
     return result;
 }
 
+double Utils::genAccuracy(TextFile* original, TextFile* decompressed){
+
+    // Check if the files have been read
+    if(original->getData() == nullptr)
+        original->read();
+    if(decompressed->getData() == nullptr)
+        decompressed->read();
+
+    // Check if reading was successful
+    if(original->getData() == nullptr || decompressed->getData() == nullptr)
+        throw std::runtime_error("Invalid attempt to calculate accuracy on an empty file!");
+
+    // Reset stringstream positions to the beginning
+    original->getData()->clear();
+    original->getData()->seekg(0, std::ios::beg);
+    decompressed->getData()->clear();
+    decompressed->getData()->seekg(0, std::ios::beg);
+
+    // Compare character by character
+    unsigned int totalChars = 0;
+    unsigned int matchingChars = 0;
+    char origChar, decompChar;
+    while(original->getData()->get(origChar) && decompressed->getData()->get(decompChar)){
+        totalChars++;
+        if(origChar == decompChar){
+            matchingChars++;
+        }
+    }
+
+    // If files are of different lengths, account for that in totalChars
+    while(original->getData()->get(origChar)){
+        totalChars++;
+    }
+    while(decompressed->getData()->get(decompChar)){
+        totalChars++;
+    }
+
+    // Calculate accuracy as a percentage
+    if(totalChars == 0) return 100.0; // Both files are empty, consider them perfectly accurate
+    return (static_cast<double>(matchingChars) / static_cast<double>(totalChars)) * 100.0;
+}
+
 // ****************** PRINTING UTILITIES *****************
 
 void Utils::printUsage(char* argv[]){
     // Print usage in red to indicate an error/incorrect invocation
     ctxt("\nUsage: \n\n", red, false, false, false);
-    ctxt(std::string(argv[0]) + " <mode> <input file>\n", green, false, false, true);
-    ctxt("  <mode>: \n\n    c ---- Compression mode\n    d ---- Decompression mode\n    gc --- Generate character frequencies mode\n    gw --- Generate word frequencies mode\n    help - Display more detailed information about modes\n    test - Execute test functions\n", yellow, false, false, true);
+    ctxt(std::string(argv[0]) + " <mode> <input file(s)>\n", green, false, false, true);
+    ctxt("  <mode>: \n\n    c ---- Compression mode\n    d ---- Decompression mode\n    gc --- Generate character frequencies mode\n    gw --- Generate word frequencies mode\n    help - Display more detailed information about modes\n    test - Execute test functions\n    acc -- Compare two text files' accuracy\n", yellow, false, false, true);
 }
 
 void Utils::printHelp(char* argv[]){
@@ -345,6 +436,12 @@ void Utils::printHelp(char* argv[]){
     ctxt("  Test Mode (test):\n", dark_green, false, false, false);
     ctxt("    Executes built-in test functions to validate file I/O and frequency analysis functionalities.\n", magenta, false, false, false);
     ctxt(std::string("    Example: ") + argv[0] + " test\n", magenta, false, false, true);
+
+    ctxt("  Accuracy Comparison Mode (acc):\n", dark_green, false, false, false);
+    ctxt("    Compares two text files and calculates the accuracy of the decompressed file against the original.\n", blue, false, false, false);
+    ctxt(std::string("    Example: ") + argv[0] + " acc original.txt decompressed.txt\n", magenta, false, false, false);
+    ctxt("      Output:\n", magenta, false, false, false);
+    ctxt("        - Displays the accuracy percentage in the console.\n\n", yellow, false, false, true);
 
     ctxt("Note:\n", dark_red, true, false, false);
     ctxt("  - Make sure that the input files exist and are accessible.\n", yellow, false, false, false);

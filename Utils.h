@@ -16,6 +16,14 @@ class Utils {
         /// @brief Test character frequency generation functionality.
         /// @note This function writes to cout.
         static void testCharFreqs();
+
+        /// @brief Test word frequency generation functionality.
+        /// @note This function writes to cout.
+        static void testWordFreqs();
+
+        /// @brief Test accuracy generation functionality.
+        /// @note This function writes to cout.
+        static void testAccuracy();
         
         /// @brief Extracts the filename from a given path.
         /// @param path The full file path.
@@ -46,6 +54,14 @@ class Utils {
         /// @return A map of words to their percent frequency / 100.
         /// @note The caller is responsible for deleting the returned map.
         static std::vector<std::pair<std::string, double>>* genWordFreqs(TextFile*);
+
+        /// @brief Generates the accuracy of a decompressed file against the original file.
+        /// @note This function assumes that both files are text files.
+        /// @param original The original text file.
+        /// @param decompressed The decompressed text file.
+        /// @return The accuracy as a percentage (0.0 to 100.0).
+        /// @note If the files are of different lengths, the accuracy will be less than 100.0.
+        static double genAccuracy(TextFile*, TextFile*);
 
         // ***************** PRINTING UTILITIES *****************
 

@@ -109,7 +109,7 @@ void BinaryFile::read() {
             uint8_t ubyte = static_cast<uint8_t>(byte);
             m_data->reserve(m_data->size() + 8);
 
-            // Extract bits one at a time from bit 7 down to bit 0.
+            // Extract bits one at a time from bit 7 down to bit 0. (since most modern machines are little-endian)
             for (int bit_index = 7; bit_index >= 0; bit_index--) {
 
                 // Shift the byte right by `bit_index` places so that the desired
@@ -169,7 +169,7 @@ void BinaryFile::write() {
 
             // If this was a partial chunk (< 8 bits), shift the assembled
             // bits left so they occupy the most-significant bits of the byte
-            // (bit 7 downwards). For a full chunk (bits_this_round == 8)
+            // (bit 7 downwards). For a full chunk, (bits_this_round == 8)
             // this shift is zero.
             if (bits_this_round < 8) {
                 byte_acc <<= static_cast<uint8_t>(8 - bits_this_round);

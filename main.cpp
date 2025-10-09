@@ -8,11 +8,12 @@
 
 #include <fstream>
 #include <algorithm>
+#include <iomanip>
 
 int main(int argc, char *argv[]){
 
-    // If the program was not run with exactly 2 or 3 arguments, print usage message and exit
-    if(argc != 3 && argc != 2){
+    // If the program was not run with exactly 2, 3, or 4 arguments, print usage message and exit
+    if(argc != 4 && argc != 3 && argc != 2){
         Utils::printUsage(argv);
         return 1;
     }
@@ -22,6 +23,11 @@ int main(int argc, char *argv[]){
 
     if(mode == "help"){
         Utils::printHelp(argv);
+
+        // If extraneous arguments were provided, warn the user
+        if(argc != 2){
+            ctxt("\nWarning: Extraneous arguments provided with 'help' mode. They have been ignored.\n", yellow, false, false, true);
+        }
         return 0;
     }
 
@@ -29,18 +35,27 @@ int main(int argc, char *argv[]){
     if(mode == "test"){
         Utils::testFileIO();
         Utils::testCharFreqs();
+        Utils::testWordFreqs();
+        Utils::testAccuracy();
+
+        // If extraneous arguments were provided, warn the user
+        if(argc != 2){
+            ctxt("\nWarning: Extraneous arguments provided with 'test' mode. They have been ignored.\n", yellow, false, false, true);
+        }
+
         return 0;
     }
 
     // Verify that the mode argument is valid
-    if(mode != "c" && mode != "d" && mode != "gc" && mode != "gw"){
+    if(mode != "c" && mode != "d" && mode != "gc" && mode != "gw" && mode != "acc"){
         ctxt("\nError: Invalid mode '"+mode+"'.\n", dark_red, false, false, false);
         Utils::printUsage(argv);
+
         return 1;
     }
 
     // For other modes, make sure an input file argument was provided
-    if(argc != 3){
+    if(argc < 3){
         ctxt("\nError: Input file argument is required for mode '"+mode+"'.", red, false, false, true);
         Utils::printUsage(argv);
         return 1;
@@ -53,6 +68,11 @@ int main(int argc, char *argv[]){
 
     // Handle compression mode
     if(mode == "c"){
+
+        // If extraneous arguments were provided, warn the user
+        if(argc != 3){
+            ctxt("\nWarning: Extraneous arguments provided with 'c' mode. They have been ignored.\n", yellow, false, false, true);
+        }
 
         // Make sure the input file is a .txt file
         if(inputFileExt != "txt"){
@@ -168,6 +188,11 @@ int main(int argc, char *argv[]){
     // Handle decompression mode
     else if(mode == "d"){
 
+        // If extraneous arguments were provided, warn the user
+        if(argc != 3){
+            ctxt("\nWarning: Extraneous arguments provided with 'd' mode. They have been ignored.\n", yellow, false, false, true);
+        }
+
         // Make sure that the input file is a .bin file
         if(inputFileExt != "bin"){
             ctxt("\nError: Decompression mode requires a .bin input file.\n", red, false, false, true);
@@ -195,11 +220,21 @@ int main(int argc, char *argv[]){
         }
 
         std::string outputFilePath = inputFileNameNoExt + ".txt";
-        //TODO: Implement decompression logic here using compTable
+
+        CompressionTable table(csvCompTable, CompressionTable::Decompress);
+
+        // Iterate through the binary bits
+
+        //TODO: Implement decompression logic here using CompressionTable
     }
 
     // Handle generate character frequencies mode
     else if(mode == "gc"){
+
+        // If extraneous arguments were provided, warn the user
+        if(argc != 3){
+            ctxt("\nWarning: Extraneous arguments provided with 'gc' mode. They have been ignored.\n", yellow, false, false, true);
+        }
 
         // Make sure the input file is a .txt file
         if(inputFileExt != "txt"){
@@ -259,6 +294,11 @@ int main(int argc, char *argv[]){
     // Handle generate word frequencies mode
     else if(mode == "gw"){
 
+        // If extraneous arguments were provided, warn the user
+        if(argc != 3){
+            ctxt("\nWarning: Extraneous arguments provided with 'gw' mode. They have been ignored.\n", yellow, false, false, true);
+        }
+
         // Make sure the input file is a .txt file
         if(inputFileExt != "txt"){
             ctxt("\nError: Generate word frequencies mode requires a .txt input file.\n", red, false, false, true);
@@ -312,6 +352,54 @@ int main(int argc, char *argv[]){
         delete freqs; 
 
         ctxt(std::string("\nSuccessfully generated word frequencies and wrote to '") + outputFilePath + "'.\n", green, false, false, true);
+    }
+    else if(mode == "acc"){
+
+        // If not enough arguments provided, error
+        if(argc < 4){
+            ctxt("\nError: Accuracy comparison mode requires two .txt input files.\n", red, false, false, true);
+            return 1;
+        }
+
+        // If extraneous arguments were provided, warn the user
+        if(argc > 4){
+            ctxt("\nWarning: Extraneous arguments provided with 'acc' mode. They have been ignored.\n", yellow, false, false, true);
+        }
+
+        // Make sure that the input files are .txt files
+        std::string inputFilePath2 = argv[3];
+        std::string inputFileName2 = Utils::extractFileName(inputFilePath2);
+        std::string inputFileExt2 = Utils::extractFileExtension(inputFilePath2);
+
+        if(inputFileExt != "txt" || inputFileExt2 != "txt"){
+            ctxt("\nError: Accuracy comparison mode requires two .txt input files.\n", red, false, false, true);
+            return 1;
+        }
+
+        // Create TextFile objects for both input files
+        TextFile originalFile(inputFilePath);
+        TextFile decompressedFile(inputFilePath2);
+
+        // Read the content of the original text file
+        try {
+            originalFile.read();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError reading original file: ") + e.what() + "\n", red, false, false, true);
+            return 1;
+        }
+
+        // Read the content of the decompressed text file
+        try {
+            decompressedFile.read();
+        } catch (const std::exception &e) {
+            ctxt(std::string("\nError reading copied file: ") + e.what() + "\n", red, false, false, true);
+            return 1;
+        }
+
+        // Generate accuracy
+        double accuracy = Utils::genAccuracy(&originalFile, &decompressedFile);
+
+        ctxt(std::string("\nThe accuracy of '") + inputFileName2 + "' against '" + inputFileName + "' is " + std::to_string(accuracy) + "%.\n", green, false, false, true);
     }
 
     return 0;
