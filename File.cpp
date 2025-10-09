@@ -91,12 +91,20 @@ void BinaryFile::read() {
     // If the file is open, read its contents into the vector<bool>
     if (file.is_open()) {
 
+        // Read the bit count
+        uint64_t bit_count;
+        file.read(reinterpret_cast<char*>(&bit_count), sizeof(bit_count));
+
         // Clear existing data
         m_data->clear();
+        
+        // Reserving space avoids excessive reallocations when reading many bytes.
+        m_data->reserve(bit_count);
 
         // Read the file content byte by byte
         char byte;
-        while (file.get(byte)) {
+        size_t bits_read = 0;
+        while (file.get(byte) && bits_read < bit_count) {
 
             // Convert each byte to its 8 bits (MSB first) and append to m_data.
             //
@@ -105,12 +113,16 @@ void BinaryFile::read() {
             //   and not implementation-defined for a signed `char`.
             // - We append bits in big-endian order (most-significant bit first)
             //   so that the first pushed bit corresponds to bit 7 of the byte.
-            // - Reserving space avoids excessive reallocations when reading many bytes.
             uint8_t ubyte = static_cast<uint8_t>(byte);
-            m_data->reserve(m_data->size() + 8);
 
-            // Extract bits one at a time from bit 7 down to bit 0. (since most modern machines are little-endian)
-            for (int bit_index = 7; bit_index >= 0; bit_index--) {
+            // Determine how many bits to read from this byte
+            size_t bits_to_read = std::min(size_t(8), bit_count - bits_read);
+
+            // Extract bits one at a time from bit 7 down (MSB first, since most modern machines are little-endian)
+            for (size_t i = 0; i < bits_to_read; ++i) {
+
+                // Start from bit 7, go down
+                int bit_index = 7 - i;
 
                 // Shift the byte right by `bit_index` places so that the desired
                 // bit lands in position 0, then mask with 1 to isolate it.
@@ -119,6 +131,9 @@ void BinaryFile::read() {
                 uint8_t bit = (ubyte >> bit_index) & 0x1u;
                 m_data->push_back(static_cast<bool>(bit));
             }
+
+            // Increment bits_read
+            bits_read += bits_to_read;
         }
 
         // Observe the niceties
@@ -140,6 +155,11 @@ void BinaryFile::write() {
 
     // If the file is open, write the vector<bool>'s contents to the file
     if (file.is_open()) {
+
+        // Write the bit count first (as a 64-bit value) so we know how many
+        // bits are valid when reading back
+        uint64_t bit_count = m_data->size();
+        file.write(reinterpret_cast<const char*>(&bit_count), sizeof(bit_count));
 
         // Pack bits from m_data into bytes and write them to the file.
         // We treat bits in m_data as MSB-first within each byte: the bit at
