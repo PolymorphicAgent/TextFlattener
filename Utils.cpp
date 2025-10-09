@@ -374,7 +374,7 @@ double Utils::genAccuracy(TextFile* original, TextFile* decompressed){
     char origChar, decompChar;
     while(original->getData()->get(origChar) && decompressed->getData()->get(decompChar)){
         totalChars++;
-        if(origChar == decompChar){
+        if(decompChar == '#' || origChar == decompChar){
             matchingChars++;
         }
     }
