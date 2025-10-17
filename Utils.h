@@ -47,6 +47,27 @@ class Utils {
         /// @note If the filename has no extension, it is returned unchanged.
         static std::string removeFileExtension(std::string filename);
 
+        // ***************** OTHER UTILITIES *****************
+
+        /// @brief Compares two vectors for equality.
+        /// @tparam T The type of elements in the vectors.
+        /// @param a The first vector.
+        /// @param b The second vector.
+        /// @return True if the vectors are equal, false otherwise.
+        /// @note This function assumes that the '==' operator is defined for type T.
+        template <typename T>
+        static bool equals(const std::vector<T>& l, const std::vector<T>& r) {
+            // Check if sizes match
+            if(l.size() != r.size()) return false;
+
+            // Compare elements
+            for(size_t i = 0; i < l.size(); i++) {
+                if(l[i] != r[i]) return false;
+            }
+
+            return true;
+        }
+
         /// @brief Generates the relative character frequencies for the given text file.
         /// @param file The text file to process.
         /// @return A map of characters to their percent frequency / 100.
