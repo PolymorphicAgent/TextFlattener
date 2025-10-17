@@ -18,11 +18,11 @@ CompressionTable::CompressionTable(CSVFile& csv, Mode mode) :
             throw std::runtime_error("Failed to read CSV file in CompressionTable constructor!");
 
         // Populate the string to binary map
-        for(const auto& row : *(m_csv->getData())){
+        for(const auto& row : *m_csv->getData()){
 
             // Each row should have exactly 2 columns
             if(row.size() != 2)
-                throw std::runtime_error("Invalid row in CSV file in CompressionTable constructor! (expected 2 columns, got " + std::to_string(row.size()) + ")");
+                throw std::runtime_error("Invalid row in CSV file in CompressionTable constructor! (expected 2 columns, got " + std::to_string(row.size()) + ") \nRow data: "+[row](){std::string r="";for(auto& i:row)r+=i;return r;}());
 
             // The first column is the string, the second column is the binary sequence (as a string of '0's and '1's)
             const std::string& str = row[0];
@@ -40,7 +40,10 @@ CompressionTable::CompressionTable(CSVFile& csv, Mode mode) :
             }
 
             // Insert into the map
-            m_map_strBin->emplace(str, bin);
+            std::string insStr=str;
+            if(str == "<space>")insStr = " ";
+            if(str == "<newline>")insStr = "\n";
+            m_map_strBin->emplace(insStr, bin);
         }
     }
     // We are in Decompress mode
@@ -79,7 +82,10 @@ CompressionTable::CompressionTable(CSVFile& csv, Mode mode) :
             }
 
             // Insert into the map
-            m_map_binStr->emplace(bin, str);
+            std::string insStr=str;
+            if(str == "<space>")insStr = " ";
+            if(str == "<newline>")insStr = "\n";
+            m_map_binStr->emplace(bin, insStr);
         }
     }
 }
@@ -116,6 +122,7 @@ std::string CompressionTable::mapBinToStr(const std::vector<bool>& bin) const {
 }
 
 std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
+    std::string str_ = str;
     // Make sure we are in Compress mode
     if(m_mode == Decompress)
         throw std::runtime_error("Invalid attempt to map string to binary in decompress mode!");
@@ -124,8 +131,12 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
     if(str == "")
         throw std::runtime_error("Invalid attempt to map empty string!");
 
+    // Handle tab as 4 spaces
+    // else if(str == "\t")str_ = "    ";
+
+
     // Look up the string in the map
-    auto it = m_map_strBin->find(str);
+    auto it = m_map_strBin->find(str_);
 
     // If found, return the corresponding binary sequence
     if(it != m_map_strBin->end())
@@ -135,10 +146,10 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
     else {
 
         // If we are matching a word, return an empty vector to signify that there's no binary representation for that word
-        if(str.length() > 1) return std::vector<bool>();
+        if(str_.length() > 1) return std::vector<bool>();
 
         // If we are matching a character, attempt to map it to a '#'
-        else if(str.length() == 1) {
+        else if(str_.length() == 1) {
 
             // Lookup the binary for the '#' character and return it
             auto it1 = m_map_strBin->find("#");
