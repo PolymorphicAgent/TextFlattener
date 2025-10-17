@@ -244,14 +244,27 @@ void CSVFile::read() {
             // Split the line by commas into cells
             std::vector<std::string> row;
             std::string cell;
-            std::stringstream lineStream(line);
-
-            // Extract each cell separated by commas
-            while (std::getline(lineStream, cell, ',')) {
-                row.push_back(cell);
+            bool in_quotes = false, escaped = false;
+            char prev;
+            std::ostringstream field;
+            
+            for (char c : line) {
+                if (c == '\\') {
+                    escaped = true;
+                }
+                else if (c == '"') {
+                    if(!escaped)in_quotes = !in_quotes;
+                     else field << c; // Escaped quote, treat as literal
+                } else if (c == ',' && !in_quotes) {
+                    row.push_back(field.str());
+                    field.str("");
+                } else {
+                    field << c;
+                }
+                if(prev == '\\')escaped = false;
+                prev = c;
             }
-
-            // Add the row to the data
+            row.push_back(field.str()); // Last field
             m_data->push_back(row);
         }
 
