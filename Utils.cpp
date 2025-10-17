@@ -48,7 +48,7 @@ void Utils::testFileIO(){
     ctxt("-------------------------------", red, false, false, true);
 
     // Create a TextFile object
-    TextFile txtFile("sample.txt");
+    TextFile txtFile("./sample/sample.txt");
 
     // Write some data to its stringstream
     *txtFile.getData() << "Hello, World!\nThis is a test stringstream.";
@@ -75,7 +75,7 @@ void Utils::testFileIO(){
     ctxt("Testing BinaryFile Writing", cyan, true, false, true);
 
     // Create a BinaryFile object
-    BinaryFile binFile("sample.bin");
+    BinaryFile binFile("./sample/sample.bin");
 
     // Write some data to its vector<bool>
     std::vector<bool> sampleData = {1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,0,0,0,0,0};
@@ -114,7 +114,7 @@ void Utils::testFileIO(){
     ctxt("Testing CSVFile Writing", cyan, true, false, true);
 
     // Create a CSVFile object
-    CSVFile csvFile("sample.csv");
+    CSVFile csvFile("./sample/sample.csv");
 
     // Write some data to its vector<vector<string>*>
     std::vector<std::vector<std::string>> sampleCSVData;
@@ -160,10 +160,10 @@ void Utils::testFileIO(){
 
 void Utils::testCharFreqs(){
     ctxt("-------------------------------", red, false, false, true);
-    ctxt("Testing Character Frequency Generation (sample.txt)", cyan, true, false, true);
+    ctxt("Testing Character Frequency Generation (./sample/sample.txt)", cyan, true, false, true);
 
     // Create and read a TextFile
-    TextFile txtFile("sample.txt");
+    TextFile txtFile("./sample/sample.txt");
     txtFile.read();
 
     // Generate character frequencies
@@ -189,10 +189,10 @@ void Utils::testCharFreqs(){
 
 void Utils::testWordFreqs(){
     ctxt("-------------------------------", red, false, false, true);
-    ctxt("Testing Word Frequency Generation (sample.txt)", cyan, true, false, true);
+    ctxt("Testing Word Frequency Generation (./sample/sample.txt)", cyan, true, false, true);
 
     // Create and read a TextFile
-    TextFile txtFile("sample.txt");
+    TextFile txtFile("./sample/sample.txt");
     txtFile.read();
 
     // Generate word frequencies
@@ -217,14 +217,14 @@ void Utils::testWordFreqs(){
 
 void Utils::testAccuracy(){
     ctxt("-------------------------------", red, false, false, true);
-    ctxt("Testing Accuracy Generation (sample.txt vs. sample_copy.txt)", cyan, true, false, true);
+    ctxt("Testing Accuracy Generation (./sample/sample.txt vs. ./sample/sample_copy.txt)", cyan, true, false, true);
 
     // Create and read the original TextFile
-    TextFile original("sample.txt");
+    TextFile original("./sample/sample.txt");
     original.read();
 
     // Create and read the decompressed TextFile
-    TextFile decompressed("sample_copy.txt");
+    TextFile decompressed("./sample/sample_copy.txt");
     decompressed.read();
 
     // Generate accuracy
