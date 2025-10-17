@@ -17,6 +17,7 @@ HEADERS := Utils.h File.h CompressionTable.h Ctxt/ctxt.h
 
 # Directory to store object files; keeps build artifacts separate from sources
 OBJDIR := build
+OBJSUBDIR := build/Ctxt
 
 # Object files live in $(OBJDIR) with the same base names as sources
 OBJS := $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
@@ -32,6 +33,7 @@ $(TARGET): $(OBJS)
 # Compile .cpp -> .o into the build directory
 $(OBJDIR)/%.o: %.cpp $(HEADERS)
 	@mkdir -p $(OBJDIR)
+	@mkdir -p $(OBJSUBDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
