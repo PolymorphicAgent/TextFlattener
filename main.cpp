@@ -12,6 +12,30 @@
 
 int main(int argc, char *argv[]){
 
+    // std::cout<<"’, ”, “\n";return 0;
+
+    // BinaryFile test("Articles.bin");
+    // test.read();
+
+    // // int i = 0;
+    // for(auto v:*test.getData()){
+    //     std::cout<<v;
+    //     // if(i == 50)break;
+    //     // i++;
+    // }
+    // return 0;
+    // CSVFile test("table.csv");
+    // test.read();
+    
+    // for(auto row: *test.getData()){
+    //     for(auto column: row){
+    //         std::cout<<column<<", ";
+    //     }
+    //     std::cout<<"\n";
+    // }
+
+    // argc = 3;argv[1] = "c";argv[2] = "sample.txt";
+
     // If the program was not run with exactly 2, 3, or 4 arguments, print usage message and exit
     if(argc != 4 && argc != 3 && argc != 2){
         Utils::printUsage(argv);
@@ -70,7 +94,7 @@ int main(int argc, char *argv[]){
     if(mode == "c"){
 
         // If extraneous arguments were provided, warn the user
-        if(argc != 3){
+        if(argc > 4){
             ctxt("\nWarning: Extraneous arguments provided with 'c' mode. They have been ignored.\n", yellow, false, false, true);
         }
 
@@ -91,88 +115,139 @@ int main(int argc, char *argv[]){
             return 1;
         }
 
-        // Check if table.csv exists in the current directory
-        CSVFile csvCompTable("table.csv");
+        // Check if table.csv exists in the csv directory
+        CSVFile csvCompTable("./csv/table.csv");
         try {
             csvCompTable.read();
         } catch (const std::exception &e) {
-            ctxt(std::string("\nError: Could not read 'table.csv'. Make sure it exists in the current directory.\n"), red, false, false, true);
+            ctxt(std::string("\nError: Could not read './csv/table.csv'. Make sure it exists in the csv directory. (")+e.what()+")\n", red, false, false, true);
             return 1;
         }
 
-        std::string outputFilePath = inputFileNameNoExt + ".bin";
+        std::string outputFilePath;
+        if(argc == 4){
+            outputFilePath = argv[3];
+        }
+        else outputFilePath = inputFileNameNoExt + ".bin";
 
         CompressionTable table(csvCompTable, CompressionTable::Compress);
 
-        // Iterate through the text file word by word
-        std::string word;
         std::vector<bool> finalBinary;
-        while(*txtFile.getData() >> word){
-            
-            // Get the pure word (without punctuation, but with apostrophes)
-            std::string pureWord = word;
-            
-            pureWord.erase(std::remove_if(pureWord.begin(), pureWord.end(), [](char i){ return ::ispunct(static_cast<unsigned char>(i)) && i != '\''; }), pureWord.end());
 
-            // Check if the word is part of our table
-            std::vector<bool> wordBinRep;
-            try {
-                wordBinRep = table.mapStrToBin(pureWord);
-            } catch (const std::exception &e) {
-                ctxt(std::string("\nError mapping to binary: ") + e.what(), red, false, false, true);
-                return 1;
-            }
+        std::string currentWord;
+        std::string::iterator it;
+        
+        // Get the entire content as a string
+        std::string content = txtFile.getData()->str();
+        
+        // Normalize em-dash (U+2014) to ASCII hyphen-minus '-' so it maps to '-' in table.csv
+        const std::string emdash_utf8 = "\xE2\x80\x94"; // U+2014
+        const std::string emdash_cp = "\x97"; // CP1252 0x97
+        size_t p = 0;
+        while((p = content.find(emdash_utf8, p)) != std::string::npos){ content.replace(p, emdash_utf8.size(), "-"); p += 1; }
+        p = 0;
+        while((p = content.find(emdash_cp, p)) != std::string::npos){ content.replace(p, emdash_cp.size(), "-"); p += 1; }
 
-            // If the word is part of our table
-            if(wordBinRep.size() != 0){
-                
-                // Determine and build the binary vector for this part (keeping in mind any punctuation)
-                for(unsigned int i = 0; i < wordBinRep.size(); i++){
+        // Normalize é to e
+        const std::string e_acute_utf8 = "\xC3\xA9"; // U+00E9
+        const std::string e_acute_cp = "\xE9"; // CP1252 0xE9
+        p = 0;
+        while((p = content.find(e_acute_utf8, p)) != std::string::npos){ content.replace(p, e_acute_utf8.size(), "e"); p += 1; }
+        p = 0;
+        while((p = content.find(e_acute_cp, p)) != std::string::npos){ content.replace(p, e_acute_cp.size(), "e"); p += 1; }
 
-                    // Check if this index is the beginning of our pure word
-                    if(word.substr(i) == pureWord)
-                        // Append the binary bits for this word to the built vector
-                        finalBinary.insert(finalBinary.end(), wordBinRep.begin(), wordBinRep.end());
+        // Iterate through the content decoding UTF-8 code points so multi-byte characters
+        // (like smart quotes) are treated as single string tokens and passed intact to mapStrToBin
+        for(size_t idx = 0; idx < content.size(); ){
+            unsigned char lead = static_cast<unsigned char>(content[idx]);
 
-                    // Otherwise simply append the binary value for the current character
-                    else {
+            // ********** GITHUB COPILOT USED FOR THIS SECTION **********
+            size_t charLen = 1;
+            if((lead & 0x80) == 0) charLen = 1;            // ASCII
+            else if((lead & 0xE0) == 0xC0) charLen = 2;   // 2-byte UTF-8
+            else if((lead & 0xF0) == 0xE0) charLen = 3;   // 3-byte UTF-8
+            else if((lead & 0xF8) == 0xF0) charLen = 4;   // 4-byte UTF-8
 
-                        // Attempt to map the character to a binary value
-                        try {
-                            std::vector<bool> tmp = table.mapStrToBin(std::string(1, word.at(i)));
+            // Safeguard: don't run past the content
+            if(idx + charLen > content.size()) charLen = 1;
 
-                            // Append the binary values to the built vector
-                            finalBinary.insert(finalBinary.end(), tmp.begin(), tmp.end());
+            std::string ch = content.substr(idx, charLen);
+            // ********** END GITHUB COPILOT SECTION **********
 
-                        } catch (const std::exception &e) {
-                            ctxt(std::string("\nError mapping to binary: ") + e.what(), red, false, false, true);
-                            return 1;
+            // Decide whether ch is whitespace or punctuation (note: isspace/ispunct operate on single-byte chars)
+            bool is_space = (charLen == 1 && isspace(static_cast<unsigned char>(ch[0])));
+            bool is_punct = false;
+            if(charLen == 1) is_punct = ispunct(static_cast<unsigned char>(ch[0]));
+
+            // Treat ASCII apostrophe specially (keep inside words)
+            if(is_space || (is_punct && ch != "'")){
+                if(!currentWord.empty()){
+                    try{
+                        std::vector<bool> wordBinRep = table.mapStrToBin(currentWord);
+                        if(wordBinRep.size() != 0 && currentWord.length() > 1){
+                            finalBinary.insert(finalBinary.end(), wordBinRep.begin(), wordBinRep.end());
+                            currentWord.clear();
+                        } else {
+                            for(size_t k = 0; k < currentWord.size(); ){
+                                // ********** GITHUB COPILOT USED FOR THIS SECTION **********
+                                // extract next UTF-8 char from currentWord
+                                unsigned char l = static_cast<unsigned char>(currentWord[k]);
+                                size_t lLen = 1;
+                                if((l & 0x80) == 0) lLen = 1;
+                                else if((l & 0xE0) == 0xC0) lLen = 2;
+                                else if((l & 0xF0) == 0xE0) lLen = 3;
+                                else if((l & 0xF8) == 0xF0) lLen = 4;
+                                std::string cc = currentWord.substr(k, lLen);
+                                // ********** END GITHUB COPILOT SECTION ********** 
+
+                                std::vector<bool> charBinRep = table.mapStrToBin(cc);
+                                finalBinary.insert(finalBinary.end(), charBinRep.begin(), charBinRep.end());
+                                k += lLen;
+                            }
+                            currentWord.clear();
                         }
-                    }
-                }
-            }
-
-            // Otherwise, simply iterate through each character and append binary mappings
-            else {
-                for(char i : word){
-
-                    // Attempt to map the character to a binary value
-                    try {
-                        std::vector<bool> tmp = table.mapStrToBin(std::string(1, i));
-
-                        // Append the binary values to the built vector
-                        finalBinary.insert(finalBinary.end(), tmp.begin(), tmp.end());
-
-                    } catch (const std::exception &e) {
-                        ctxt(std::string("\nError mapping to binary: ") + e.what(), red, false, false, true);
+                    } catch (const std::exception &e){
+                        ctxt(std::string("\nError mapping word to binary: ") + e.what(), red, false, false, true);
                         return 1;
                     }
                 }
+
+                // map the space or punctuation itself
+                try{
+                    std::vector<bool> charBinRep = table.mapStrToBin(ch);
+                    finalBinary.insert(finalBinary.end(), charBinRep.begin(), charBinRep.end());
+                } catch (const std::exception &e){
+                    ctxt(std::string("\nError mapping character to binary: ") + e.what(), red, false, false, true);
+                    return 1;
+                }
+            } else {
+                // append this UTF-8 char to currentWord
+                currentWord += ch;
+            }
+
+            idx += charLen;
+        }
+        
+        // Process any remaining word at the end
+        if(!currentWord.empty()) {
+            try {
+                std::vector<bool> wordBinRep = table.mapStrToBin(currentWord);
+                if(wordBinRep.size() != 0 && currentWord.length() > 1) {
+                    finalBinary.insert(finalBinary.end(), wordBinRep.begin(), wordBinRep.end());
+                } else {
+                    for(char c : currentWord) {
+                        std::vector<bool> charBinRep = table.mapStrToBin(std::string(1, c));
+                        finalBinary.insert(finalBinary.end(), charBinRep.begin(), charBinRep.end());
+                    }
+                }
+            } catch (const std::exception &e) {
+                ctxt(std::string("\nError mapping final word to binary: ") + e.what(), red, false, false, true);
+                return 1;
             }
         }
         
         // Write the binary vector to the file
-        BinaryFile binOut(inputFileNameNoExt + ".bin");
+        BinaryFile binOut(outputFilePath);
         binOut.setData(&finalBinary);
 
         try {
@@ -189,7 +264,7 @@ int main(int argc, char *argv[]){
     else if(mode == "d"){
 
         // If extraneous arguments were provided, warn the user
-        if(argc != 3){
+        if(argc > 4){
             ctxt("\nWarning: Extraneous arguments provided with 'd' mode. They have been ignored.\n", yellow, false, false, true);
         }
 
@@ -211,21 +286,81 @@ int main(int argc, char *argv[]){
         }
 
         // Check if table.csv exists in the current directory
-        CSVFile csvCompTable("table.csv");
+        CSVFile csvCompTable("./csv/table.csv");
         try {
             csvCompTable.read();
         } catch (const std::exception &e) {
-            ctxt(std::string("\nError: Could not read 'table.csv'. Make sure it exists in the current directory.\n"), red, false, false, true);
+            ctxt(std::string("\nError: Could not read './csv/table.csv'. Make sure it exists in the csv directory.\n"), red, false, false, true);
             return 1;
         }
 
-        std::string outputFilePath = inputFileNameNoExt + ".txt";
+        std::string outputFilePath;
+        if(argc == 4)
+            outputFilePath = argv[3];
+        else outputFilePath = inputFileNameNoExt + ".txt";
 
         CompressionTable table(csvCompTable, CompressionTable::Decompress);
 
-        // Iterate through the binary bits
+        TextFile outFile(outputFilePath);
 
-        //TODO: Implement decompression logic here using CompressionTable
+        // Iterate through the binary bits
+        bool first = true;
+        unsigned int count = 0;
+        std::vector<bool> tmp;
+        size_t i = 0;
+        for(bool b : *binFile.getData()){
+
+            // If starting a new representation, clear tmp and record the leading bit and expected remaining bits
+            if(first){
+                tmp.clear();
+                tmp.push_back(b);
+                first = false;
+                count = b ? 3 : 6; // short (1 + 3) or long (1 + 6)
+            }
+            // Otherwise we are continuing the current representation
+            else {
+                tmp.push_back(b);
+                if(count > 0) count--; // consume one of the remaining bits
+
+                // If we've read the last required bit for this representation, map and output it now
+                if(count == 0){
+                    first = true;
+
+                    // Stream our temporary representation to the file
+                    std::string tmpString;
+                    try {
+                        tmpString = table.mapBinToStr(tmp);
+                    }
+                    catch (const std::exception &e){
+                        ctxt(std::string("Error mapping Binary to String: ")+e.what(), red, true, false, true);
+                        return 1;
+                    }
+
+                    *outFile.getData() << tmpString;
+
+                    // //debug
+                    // if(tmpString == " ")std::cout<<"<s>";
+                    // else if(tmpString == "\n")std::cout<<"<n>";
+                    // else std::cout<<tmpString;
+                    
+                    tmp.clear();
+                }
+            }
+
+            ++i;
+        }
+
+        // Write out the file
+        try {
+            outFile.write();
+        }
+        catch (const std::exception &e) {
+            ctxt(std::string("Error Writing File: ")+e.what(), red, true, false, true);
+            return 1;
+        }
+
+        // Success!
+        ctxt(std::string("\nSuccessfully decompressed '") + inputFileName + "' to '" + outputFilePath + "'.\n", green, false, false, true);
     }
 
     // Handle generate character frequencies mode
@@ -426,5 +561,11 @@ int main(int argc, char *argv[]){
 
     MISC.
     - https://www.geeksforgeeks.org/cpp/how-to-append-a-vector-to-a-vector-in-cpp/
+    - https://codeshack.io/text-to-ascii-converter/
+
+    GITHUB COPILOT was used on 15 lines of code in two sections due to my infamiliarity with text encoding. These lines can be found surrounded by the following comments:
+    
+    // ********** GITHUB COPILOT USED FOR THIS SECTION **********
+    // ********** END GITHUB COPILOT SECTION ********** 
 
 */
