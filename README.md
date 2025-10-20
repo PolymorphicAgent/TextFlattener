@@ -10,6 +10,8 @@ A very simple C++ text compression program. Only supports 61 of the 256 ASCII ch
 ## UML Draft (Pre-code planning)
 ![uml-draft](diagrams/UML-Draft.jpeg)
 
+Note: Dynamic runtime dictionary approach was eliminated by professor limitation
+
 ## Building & Running - Windows
 ---
 1. Ensure a c++ compiling toolchain is installed (i.e. Cygwin, MSVC, etc.) with support for make
