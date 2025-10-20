@@ -5,6 +5,7 @@
 #include <iostream>
 #include <algorithm>
 #include <string>
+#include <iomanip>
 
 std::string Utils::extractFileName(std::string path){
     // Find the last occurrence of '/' or '\'
@@ -362,21 +363,26 @@ double Utils::genAccuracy(TextFile* original, TextFile* decompressed){
     if(original->getData() == nullptr || decompressed->getData() == nullptr)
         throw std::runtime_error("Invalid attempt to calculate accuracy on an empty file!");
 
+    // Normalize both files in memory (change smart quotes and apostrophes to straight ones, mdashes to -, and accented e to e)
+    original->normalizePunctuation();
+    decompressed->normalizePunctuation();
+
     // Reset stringstream positions to the beginning
     original->getData()->clear();
     original->getData()->seekg(0, std::ios::beg);
     decompressed->getData()->clear();
     decompressed->getData()->seekg(0, std::ios::beg);
-
+    
     // Compare character by character
     unsigned int totalChars = 0;
-    unsigned int matchingChars = 0;
+    unsigned int matchingChars = 0, firstNonMatch = 0;
     char origChar, decompChar;
     while(original->getData()->get(origChar) && decompressed->getData()->get(decompChar)){
-        totalChars++;
         if(decompChar == '#' || origChar == decompChar){
             matchingChars++;
         }
+        else if(firstNonMatch == 0)firstNonMatch = totalChars;
+        totalChars++;
     }
 
     // If files are of different lengths, account for that in totalChars
@@ -386,6 +392,27 @@ double Utils::genAccuracy(TextFile* original, TextFile* decompressed){
     while(decompressed->getData()->get(decompChar)){
         totalChars++;
     }
+
+    // // debug
+    // std::cout<<"totalChars: "<<totalChars<<"\nmatchingChars: "<<matchingChars<<"\nfirstNonMatch: "<<firstNonMatch<<"\nOriginal:     ";
+
+    // auto dumpBytes = [](std::stringstream* ss, size_t pos){
+    //     ss->clear();
+    //     ss->seekg(pos);
+    //     for (int i = 0; i < 20; ++i) {
+    //         int c = ss->get();
+    //         if (c == EOF) break;
+    //         std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)c << " ";
+    //     }
+    //     std::cout << "\n";
+    // };
+
+    
+    // dumpBytes(original->getData(), firstNonMatch);
+    // std::cout << "\nDecompressed: ";
+
+    // dumpBytes(decompressed->getData(), firstNonMatch);
+
 
     // Calculate accuracy as a percentage
     if(totalChars == 0) return 100.0; // Both files are empty, consider them perfectly accurate
@@ -418,10 +445,12 @@ double Utils::genPercentReduction(TextFile* original, BinaryFile* compressed){
     // Get the number of bits in compressed file
     unsigned int numCompressedBits = compressed->getData()->size();
 
+    // std::cout<<"Debug: numOriginalChars = "<<numOriginalChars<<", numCompressedBits = "<<numCompressedBits<<"\n";
+
     // Use the provided formula to calculate percent reduction
-    // 100*(8*(numOriginalChars - numCompressedBits)/(8*numOriginalChars))
+    // 100*((8 * numOriginalChars - numCompressedBits)/(8*numOriginalChars))
     if(numOriginalChars == 0) return 0.0; // Avoid division by zero, no reduction possible on empty original
-    return 100.0 * (8.0 * (static_cast<double>(numOriginalChars) - static_cast<double>(numCompressedBits)) / (8.0 * static_cast<double>(numOriginalChars)));
+    return 100.0 * ((8.0 * static_cast<double>(numOriginalChars) - static_cast<double>(numCompressedBits)) / (8.0 * static_cast<double>(numOriginalChars)));
 
 }
 
