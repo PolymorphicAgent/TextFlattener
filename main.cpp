@@ -17,6 +17,11 @@
 // ---------------------- Main Definition ----------------------
 int main(int argc, char *argv[]){
 
+    // BinaryFile test("frequency_generation_source/Articles.bin");
+    // test.read();
+    // for(int i = 0; i<100; i++)
+    //     std::cout<<test.getData()->at(i);return 0;
+
     // If the program was not run with exactly 2, 3, or 4 arguments, print usage message and exit
     if(argc != 4 && argc != 3 && argc != 2){
         Utils::printUsage(argv);
@@ -252,54 +257,49 @@ int main(int argc, char *argv[]){
         TextFile outFile(outputFilePath);
 
         // Iterate through the binary bits one by one
-        bool first = true;
+        bool one, two;
         unsigned int count = 0;
         std::vector<bool> tmp;
-        for(bool b : *binFile.getData()){
+        while(count < binFile.getData()->size()){
 
-            // If starting a new representation, clear tmp and record the leading bit and expected remaining bits
-            if(first){
-                tmp.clear();
-                tmp.push_back(b);
-                first = false;
+            tmp.push_back(binFile.getData()->at(count));
 
-                // short (1 + 3) or long (1 + 6)
-                count = b ? 3 : 6; 
+            if(binFile.getData()->at(count)){//short
+                //grab the next 2
+                one = binFile.getData()->at(++count);
+                tmp.push_back(one);
+                two = binFile.getData()->at(++count);
+                tmp.push_back(two);
+
+                if(!one && !two){}//3bit
+                else tmp.push_back(binFile.getData()->at(++count));
+            }
+            else {//long
+                //grab the next 6
+                for(int i = 0; i<6; i++)
+                    tmp.push_back(binFile.getData()->at(++count));
             }
 
-            // Otherwise we are continuing the current representation
-            else {
+            // Stream our temporary representation to the file object's data stream
+            std::string tmpString;
+            try {
 
-                // Add the binary bit to our temporary vector
-                tmp.push_back(b);
-                
-                // Consume one of the remaining bits
-                if(count > 0) count--; 
-
-                // If we've read the last required bit for this representation, map it now
-                if(count == 0){
-                    first = true;
-
-                    // Stream our temporary representation to the file object's data stream
-                    std::string tmpString;
-                    try {
-
-                        // Attempt to map the binary to a string
-                        tmpString = table.mapBinToStr(tmp);
-                    }
-                    catch (const std::exception &e){
-                        ctxt(std::string("Error mapping Binary to String: ")+e.what(), red, true, false, true);
-                        return 1;
-                    }
-
-                    // Actually stream the binary to the file object
-                    // Note that we did not write to the file yet! This is still in memory
-                    *outFile.getData() << tmpString;
-                    
-                    // Clear our temporary vector
-                    tmp.clear();
-                }
+                // Attempt to map the binary to a string
+                tmpString = table.mapBinToStr(tmp);
             }
+            catch (const std::exception &e){
+                ctxt(std::string("Error mapping Binary to String: ")+e.what(), red, true, false, true);
+                return 1;
+            }
+
+            // Actually stream the binary to the file object
+            // Note that we did not write to the file yet! This is still in memory
+            *outFile.getData() << tmpString;
+            
+            // Clear our temporary vector
+            tmp.clear();
+
+            count++;
         }
 
         // Attempt to write out the file
