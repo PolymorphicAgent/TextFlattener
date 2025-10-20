@@ -1,0 +1,56 @@
+Have a non-directory at the top, so creating directory top_dir
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./CompressionTable.cpp to top_dir
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./CompressionTable.h to top_dir
+Creating filelist for Ctxt
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./File.cpp to top_dir
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./File.h to top_dir
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./Makefile to top_dir
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./README.md to top_dir
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./Utils.cpp to top_dir
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./Utils.h to top_dir
+Creating filelist for build
+Creating filelist for csv
+Creating filelist for diagrams
+Creating filelist for documents
+Creating filelist for frequency_generation_source
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./main.cpp to top_dir
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./main.exe to top_dir
+Adding /mnt/c/Users/Peter/Documents/ECS 101/Project 1/./right.ahk to top_dir
+Creating filelist for sample
+Categorizing files.
+Finding a working MD5 command....
+Found a working MD5 command.
+Computing results.
+
+
+SLOC	Directory	SLOC-by-Language (Sorted)
+1030    top_dir         cpp=1030
+168     Ctxt            cpp=168
+0       build           (none)
+0       csv             (none)
+0       diagrams        (none)
+0       documents       (none)
+0       frequency_generation_source (none)
+0       sample          (none)
+
+
+Totals grouped by language (dominant language first):
+cpp:           1198 (100.00%)
+
+
+
+
+Total Physical Source Lines of Code (SLOC)                = 1,198
+Development Effort Estimate, Person-Years (Person-Months) = 0.24 (2.90)
+ (Basic COCOMO model, Person-Months = 2.4 * (KSLOC**1.05))
+Schedule Estimate, Years (Months)                         = 0.31 (3.75)
+ (Basic COCOMO model, Months = 2.5 * (person-months**0.38))
+Estimated Average Number of Developers (Effort/Schedule)  = 0.77
+Total Estimated Cost to Develop                           = $ 32,660
+ (average salary = $56,286/year, overhead = 2.40).
+SLOCCount, Copyright (C) 2001-2004 David A. Wheeler
+SLOCCount is Open Source Software/Free Software, licensed under the GNU GPL.
+SLOCCount comes with ABSOLUTELY NO WARRANTY, and you are welcome to
+redistribute it under certain conditions as specified by the GNU GPL license;
+see the documentation for details.
+Please credit this data as "generated using David A. Wheeler's 'SLOCCount'."
