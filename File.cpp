@@ -1,12 +1,13 @@
+// ---------------------- Project Includes ----------------------
 #include "File.h"
 
+// ---------------------- System Includes ----------------------
 #include <fstream>
 #include <cstdint>
 #include <regex>
 
 // ****************** TextFile Implementation ******************
 
-// Constructor for TextFile
 TextFile::TextFile(std::string path, std::stringstream* data) : m_data(data) {
 
     // If no data provided, create a new stringstream
@@ -16,10 +17,8 @@ TextFile::TextFile(std::string path, std::stringstream* data) : m_data(data) {
     setPath(path);
 }
 
-// Destructor for TextFile
 TextFile::~TextFile() = default;
 
-// Implements reading from a text file
 void TextFile::read() {
 
     // Open the file for reading
@@ -44,7 +43,6 @@ void TextFile::read() {
     }
 }
 
-// Implements writing to a text file
 void TextFile::write() {
 
     // Open the file for writing
@@ -130,7 +128,6 @@ void TextFile::normalizePunctuation() {
 
 // ****************** BinaryFile Implementation ******************
 
-// Constructor for BinaryFile
 BinaryFile::BinaryFile(std::string path, std::vector<bool>* data) : m_data(data) {
 
     // If no data provided, create a new vector<bool>
@@ -140,10 +137,8 @@ BinaryFile::BinaryFile(std::string path, std::vector<bool>* data) : m_data(data)
     setPath(path);
 }
 
-// Destructor for BinaryFile
 BinaryFile::~BinaryFile() = default;
 
-// Implements reading from a binary file
 void BinaryFile::read() {
 
     // Open the file for reading
@@ -208,7 +203,6 @@ void BinaryFile::read() {
     }
 }
 
-// Implement writing to a binary file
 void BinaryFile::write() {
 
     // Open the file for writing
@@ -273,7 +267,6 @@ void BinaryFile::write() {
 
 // ****************** CSVFile Implementation ******************
 
-// Constructor for CSVFile
 CSVFile::CSVFile(std::string path, std::vector<std::vector<std::string>>* data) : m_data(data) {
 
     // If no data provided, create a new vector<vector<string>>
@@ -283,10 +276,8 @@ CSVFile::CSVFile(std::string path, std::vector<std::vector<std::string>>* data) 
     setPath(path);
 }
 
-// Destructor for CSVFile
 CSVFile::~CSVFile() = default;
 
-// Implements reading from a CSV file
 void CSVFile::read() {
 
     // Open the file for reading
@@ -310,23 +301,43 @@ void CSVFile::read() {
             char prev;
             std::ostringstream field;
             
+            // Iterate through the characters in this line
             for (char c : line) {
-                if (c == '\\') {
+
+                // Check if the field is escaped
+                if (c == '\\')
                     escaped = true;
-                }
+                
+                // Check if the escaped field is a quote
                 else if (c == '"') {
+
+                    // Toggle quote escapage
                     if(!escaped)in_quotes = !in_quotes;
-                     else field << c; // Escaped quote, treat as literal
-                } else if (c == ',' && !in_quotes) {
+
+                    // Escaped quote, treat as literal
+                    else field << c; 
+                }
+                
+                // Check for escaped delimiter
+                else if (c == ',' && !in_quotes) {
                     row.push_back(field.str());
                     field.str("");
-                } else {
-                    field << c;
                 }
+                
+                // Normal characters
+                else field << c;
+                
+                // Toggle escapage state
                 if(prev == '\\')escaped = false;
+
+                // Keep track of previous character
                 prev = c;
             }
-            row.push_back(field.str()); // Last field
+
+            // Handle the last field
+            row.push_back(field.str());
+
+            // Append the row
             m_data->push_back(row);
         }
 
@@ -340,7 +351,6 @@ void CSVFile::read() {
     }
 }
 
-// Implements writing to a CSV file
 void CSVFile::write() {
 
     // Open the file for writing

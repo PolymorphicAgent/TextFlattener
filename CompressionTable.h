@@ -1,9 +1,11 @@
 #pragma once
 
+// ---------------------- System Includes ----------------------
 #include <unordered_map>
 #include <vector>
 #include <string>
 
+// ---------------------- Project Includes ----------------------
 #include "File.h"
 
 /// @brief This class represents a compression table (aka dictionary) that will provide conversion

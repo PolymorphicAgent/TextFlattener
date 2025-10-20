@@ -1,40 +1,21 @@
-#include<iostream>
 
+// ---------------------- System Header Includes ----------------------
+#include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+
+// ---------------------- Class Header Includes ----------------------
 #include "File.h"
 #include "Utils.h"
 #include "CompressionTable.h"
 
+
+// ---------------------- Library Includes ----------------------
 #include "Ctxt/ctxt.h"
 
-#include <fstream>
-#include <algorithm>
-#include <iomanip>
-
+// ---------------------- Main Definition ----------------------
 int main(int argc, char *argv[]){
-
-    // std::cout<<"’, ”, “\n";return 0;
-
-    // BinaryFile test("Articles.bin");
-    // test.read();
-
-    // // int i = 0;
-    // for(auto v:*test.getData()){
-    //     std::cout<<v;
-    //     // if(i == 50)break;
-    //     // i++;
-    // }
-    // return 0;
-    // CSVFile test("table.csv");
-    // test.read();
-    
-    // for(auto row: *test.getData()){
-    //     for(auto column: row){
-    //         std::cout<<column<<", ";
-    //     }
-    //     std::cout<<"\n";
-    // }
-
-    // argc = 3;argv[1] = "c";argv[2] = "sample.txt";
 
     // If the program was not run with exactly 2, 3, or 4 arguments, print usage message and exit
     if(argc != 4 && argc != 3 && argc != 2){
@@ -44,7 +25,6 @@ int main(int argc, char *argv[]){
 
     // If the user requested help, print detailed usage information and exit
     std::string mode = argv[1];
-
     if(mode == "help"){
         Utils::printHelp(argv);
 
@@ -85,6 +65,7 @@ int main(int argc, char *argv[]){
         return 1;
     }
 
+    // Modify strings
     std::string inputFilePath = argv[2];
     std::string inputFileName = Utils::extractFileName(inputFilePath);
     std::string inputFileExt = Utils::extractFileExtension(inputFilePath);
@@ -115,7 +96,8 @@ int main(int argc, char *argv[]){
             return 1;
         }
 
-        // Normalize the text file in memory (change smart quotes and apostrophes to straight ones, mdashes to -, etc.)
+        // Normalize the text file in memory
+        // (changes smart quotes and apostrophes to straight ones, em-dashes to -, etc.)
         txtFile.normalizePunctuation();
 
         // Reset stringstream position to the beginning
@@ -131,21 +113,24 @@ int main(int argc, char *argv[]){
             return 1;
         }
 
+        // Calculate the output file path
         std::string outputFilePath;
         if(argc == 4){
+
+            // If user-defined
             outputFilePath = argv[3];
         }
+
+        // Default output path
         else outputFilePath = inputFileNameNoExt + ".bin";
 
         CompressionTable table(csvCompTable, CompressionTable::Compress);
 
+        // Stores the final binary vector to be written to the output file
         std::vector<bool> finalBinary;
 
+        // Keep track of current word
         std::string currentWord = "";
-        std::string::iterator it;
-        
-        // Get the entire content as a string
-        std::string content = txtFile.getData()->str();
 
         // Read file content character by character
         char c;
@@ -156,6 +141,7 @@ int main(int argc, char *argv[]){
 
                 // Attempt to map the current word to binary
                 try {
+
                     // Append the space/newline char to the end of the mapping
                     std::vector<bool> tmp = table.mapStrToBin(currentWord+std::string(1,c));
 
@@ -177,8 +163,9 @@ int main(int argc, char *argv[]){
             }
         }
 
-        // handle the last word
+        // handle the last word if it exists
         if(!currentWord.empty()){
+
             // Attempt to map the final word to binary
             try {
                 std::vector<bool> tmp = table.mapStrToBin(currentWord);
@@ -203,11 +190,13 @@ int main(int argc, char *argv[]){
             return 1;
         }
 
+        // Notify the user of the successful compression
         ctxt(std::string("\nSuccessfully compressed '") + inputFileName + "' to '" + outputFilePath + "'.\n", green, false, false, true);
 
         // Calculate the percent reduction
         double reduction = Utils::genPercentReduction(&txtFile, &binOut);
 
+        // Display the percent reduction
         ctxt(std::string("Compression reduced file size by ") + std::to_string(reduction) + "%.\n", magenta, false, false, true);
 
     }
@@ -246,20 +235,26 @@ int main(int argc, char *argv[]){
             return 1;
         }
 
+        // Calculate the output file path
         std::string outputFilePath;
         if(argc == 4)
+
+            // User-defined output path
             outputFilePath = argv[3];
+
+        // Default file path
         else outputFilePath = inputFileNameNoExt + ".txt";
 
+        // Create our mapping table object in decompression mode
         CompressionTable table(csvCompTable, CompressionTable::Decompress);
 
+        // Create our output text file object
         TextFile outFile(outputFilePath);
 
-        // Iterate through the binary bits
+        // Iterate through the binary bits one by one
         bool first = true;
         unsigned int count = 0;
         std::vector<bool> tmp;
-        size_t i = 0;
         for(bool b : *binFile.getData()){
 
             // If starting a new representation, clear tmp and record the leading bit and expected remaining bits
@@ -267,20 +262,29 @@ int main(int argc, char *argv[]){
                 tmp.clear();
                 tmp.push_back(b);
                 first = false;
-                count = b ? 3 : 6; // short (1 + 3) or long (1 + 6)
+
+                // short (1 + 3) or long (1 + 6)
+                count = b ? 3 : 6; 
             }
+
             // Otherwise we are continuing the current representation
             else {
-                tmp.push_back(b);
-                if(count > 0) count--; // consume one of the remaining bits
 
-                // If we've read the last required bit for this representation, map and output it now
+                // Add the binary bit to our temporary vector
+                tmp.push_back(b);
+                
+                // Consume one of the remaining bits
+                if(count > 0) count--; 
+
+                // If we've read the last required bit for this representation, map it now
                 if(count == 0){
                     first = true;
 
-                    // Stream our temporary representation to the file
+                    // Stream our temporary representation to the file object's data stream
                     std::string tmpString;
                     try {
+
+                        // Attempt to map the binary to a string
                         tmpString = table.mapBinToStr(tmp);
                     }
                     catch (const std::exception &e){
@@ -288,21 +292,17 @@ int main(int argc, char *argv[]){
                         return 1;
                     }
 
+                    // Actually stream the binary to the file object
+                    // Note that we did not write to the file yet! This is still in memory
                     *outFile.getData() << tmpString;
-
-                    // //debug
-                    // if(tmpString == " ")std::cout<<"<s>";
-                    // else if(tmpString == "\n")std::cout<<"<n>";
-                    // else std::cout<<tmpString;
                     
+                    // Clear our temporary vector
                     tmp.clear();
                 }
             }
-
-            ++i;
         }
 
-        // Write out the file
+        // Attempt to write out the file
         try {
             outFile.write();
         }
@@ -332,7 +332,7 @@ int main(int argc, char *argv[]){
         // Create a TextFile object for the input file
         TextFile txtFile(inputFilePath);
 
-        // Read the content of the text file
+        // Attempt to read the content of the text file
         try {
             txtFile.read();
         } catch (const std::exception &e) {
@@ -343,7 +343,7 @@ int main(int argc, char *argv[]){
         // Generate character frequencies
         auto freqs = Utils::genCharFreqs(&txtFile);
 
-        // Write frequencies to a CSV file
+        // Prepare to write frequencies to a CSV file object
         std::string outputFilePath = inputFileNameNoExt + "_char_freqs.csv";
         CSVFile freqFile(outputFilePath);
         std::vector<std::vector<std::string>> freqData;
@@ -353,17 +353,25 @@ int main(int argc, char *argv[]){
 
         // Populate frequency data
         for(const auto& pair : *freqs){
+
+            // Create a string representation of the character
             std::string charStr(1, pair.first);
+
+            // Replace for readability
             if(pair.first == '\n') charStr = "<newline>";
             else if(pair.first == ' ') charStr = "<space>";
+
+            // Make sure delimeter is properly escaped
             else if(pair.first == ',') charStr = "\",\"";
+
+            // Insert the character
             freqData.emplace_back(std::vector<std::string>{charStr, std::to_string(pair.second)});
         }
 
-        // Set data
+        // Set data to the file object
         freqFile.setData(&freqData);
 
-        // Write to CSV file
+        // Write to the CSV file
         try {
             freqFile.write();
         } catch (const std::exception &e) {
@@ -375,6 +383,7 @@ int main(int argc, char *argv[]){
         // Clean up allocated memory
         delete freqs; 
 
+        // Success!
         ctxt(std::string("\nSuccessfully generated character frequencies and wrote to '") + outputFilePath + "'.\n", green, false, false, true);
     }
 
@@ -395,7 +404,7 @@ int main(int argc, char *argv[]){
         // Create a TextFile object for the input file
         TextFile txtFile(inputFilePath);
 
-        // Read the content of the text file
+        // Attempt to read the content of the text file
         try {
             txtFile.read();
         } catch (const std::exception &e) {
@@ -406,7 +415,7 @@ int main(int argc, char *argv[]){
         // Generate word frequencies
         auto freqs = Utils::genWordFreqs(&txtFile);
 
-        // Write frequencies to a CSV file
+        // Prepare to write frequencies to a CSV file
         std::string outputFilePath = inputFileNameNoExt + "_word_freqs.csv";
         CSVFile freqFile(outputFilePath);
         std::vector<std::vector<std::string>> freqData;
@@ -416,17 +425,22 @@ int main(int argc, char *argv[]){
 
         // Populate frequency data
         for(const auto& pair : *freqs){
+
+            // Get the string for the word
             std::string wordStr = pair.first;
-            if(wordStr.find(',') != std::string::npos){
-                wordStr = "\"" + wordStr + "\""; // Escape commas in words
-            }
+
+            // Make sure the delimiter is properly escaped
+            if(wordStr.find(',') != std::string::npos)
+                wordStr = "\"" + wordStr + "\"";
+            
+            // Insert the word
             freqData.emplace_back(std::vector<std::string>{wordStr, std::to_string(pair.second)});
         }
 
-        // Set data
+        // Set data to the file object
         freqFile.setData(&freqData);
 
-        // Write to CSV file
+        // Write to the CSV file
         try {
             freqFile.write();
         } catch (const std::exception &e) {
@@ -438,8 +452,11 @@ int main(int argc, char *argv[]){
         // Clean up allocated memory
         delete freqs; 
 
+        // Success!
         ctxt(std::string("\nSuccessfully generated word frequencies and wrote to '") + outputFilePath + "'.\n", green, false, false, true);
     }
+
+    // Handle accuracy comparison mode
     else if(mode == "acc"){
 
         // If not enough arguments provided, error
@@ -479,16 +496,18 @@ int main(int argc, char *argv[]){
         try {
             decompressedFile.read();
         } catch (const std::exception &e) {
-            ctxt(std::string("\nError reading copied file: ") + e.what() + "\n", red, false, false, true);
+            ctxt(std::string("\nError reading decompressed file: ") + e.what() + "\n", red, false, false, true);
             return 1;
         }
 
         // Generate accuracy
         double accuracy = Utils::genAccuracy(&originalFile, &decompressedFile);
 
+        // Display
         ctxt(std::string("\nThe accuracy of '") + inputFileName2 + "' against '" + inputFileName + "' is " + std::to_string(accuracy) + "%.\n", green, false, false, true);
     }
 
+    // Success!
     return 0;
       
 }

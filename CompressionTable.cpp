@@ -4,8 +4,10 @@ CompressionTable::CompressionTable(CSVFile& csv, Mode mode) :
     m_csv(&csv), m_mode(mode), m_map_binStr(nullptr), 
     m_map_strBin(nullptr)
 {
+
     // Check if we are in Compress or Decompress mode
     if(mode == Compress){
+
         // Initialize the string to binary map
         m_map_strBin = new std::unordered_map<std::string, std::vector<bool>>();
 
@@ -39,15 +41,17 @@ CompressionTable::CompressionTable(CSVFile& csv, Mode mode) :
                     throw std::runtime_error("Invalid character in binary string in CSV file in CompressionTable constructor! (expected '0' or '1', got '" + std::string(1, c) + "')");
             }
 
-            // Insert into the map
+            // Insert into the map while making sure spaces and newlines are handled correctly
             std::string insStr=str;
             if(str == "<space>")insStr = " ";
             if(str == "<newline>")insStr = "\n";
             m_map_strBin->emplace(insStr, bin);
         }
     }
+
     // We are in Decompress mode
     else{
+
         // Initialize the binary to string map
         m_map_binStr = new std::unordered_map<std::vector<bool>, std::string>();
 
@@ -81,7 +85,7 @@ CompressionTable::CompressionTable(CSVFile& csv, Mode mode) :
                     throw std::runtime_error("Invalid character in binary string in CSV file in CompressionTable constructor! (expected '0' or '1', got '" + std::string(1, c) + "')");
             }
 
-            // Insert into the map
+            // Insert into the map while accounting for space and newline
             std::string insStr=str;
             if(str == "<space>")insStr = " ";
             if(str == "<newline>")insStr = "\n";
@@ -91,6 +95,7 @@ CompressionTable::CompressionTable(CSVFile& csv, Mode mode) :
 }
 
 std::string CompressionTable::mapBinToStr(const std::vector<bool>& bin) const {
+
     // Make sure we are in Decompress mode
     if(m_mode == Compress)
         throw std::runtime_error("Invalid attempt to map binary to string in compress mode!");
@@ -105,24 +110,12 @@ std::string CompressionTable::mapBinToStr(const std::vector<bool>& bin) const {
     if(it != m_map_binStr->end())
         return it->second;
 
-    // If not found
-    else {
-
-        // If unknown, return a "#"
-        return "#";
-
-        // For easier debugging, we can print the binary sequence that was not found
-        // std::string binStr;
-        // for(bool b : bin)
-        //     binStr += (b ? '1' : '0');
-
-    }
-    
+    // If not found return a "#"
+    else return "#";    
 }
 
 std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
 
-    std::string str_ = str;
     // Make sure we are in Compress mode
     if (m_mode == Decompress)
         throw std::runtime_error("Invalid attempt to map string to binary in decompress mode!");
@@ -132,17 +125,19 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
         throw std::runtime_error("Invalid attempt to map empty string!");
 
     // Look up the string in the map (exact match)
-    auto it = m_map_strBin->find(str_);
+    auto it = m_map_strBin->find(str);
     
     // If found return the corresponding binary sequence
     if (it != m_map_strBin->end())
         return it->second;
 
     // If not found
-    if (str_.length() > 1) {
+    if (str.length() > 1) {
 
         // First attempt to find any multi-character table entry that is a substring of str_
         for (const auto& pair : *m_map_strBin) {
+
+            // Take the string from the Compression Table
             const std::string& tableStr = pair.first;
 
             // Only consider multicharacter table entries here
@@ -150,11 +145,9 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
                 continue;
 
             // Attempt to find this table entry in the query string
-            size_t pos = str_.find(tableStr);
+            size_t pos = str.find(tableStr);
             if (pos == std::string::npos)
                 continue; // try next table entry
-
-            //std::cout<<"found shorthand in "+str_+"\n";//debug
 
             // Found a matching substring so build a combined boolean vector consisting of binary(before) + binary(matched) + binary(after)
             std::vector<bool> result;
@@ -163,24 +156,28 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
             if (pos > 0) {
 
                 // Take a substring of the preceding characters
-                std::string before = str_.substr(0, pos);
+                std::string before = str.substr(0, pos);
 
+                // Iterate through the string char by char
                 for (char c : before) {
 
+                    // Convert the character to a string
                     std::string charStr(1, c);
+
+                    // Find the character in our map
                     auto charIt = m_map_strBin->find(charStr);
 
                     if (charIt != m_map_strBin->end()) {
 
+                        // If the character is found, append it directly to our binary
                         const std::vector<bool>& charBin = charIt->second;
                         result.insert(result.end(), charBin.begin(), charBin.end());
                     } else {
 
-                        // Append '#' binary
+                        // Otherwise, append '#' binary
                         auto hashIt = m_map_strBin->find("#");
 
                         if (hashIt != m_map_strBin->end()) {
-
                             const std::vector<bool>& hashBin = hashIt->second;
                             result.insert(result.end(), hashBin.begin(), hashBin.end());
                         } else {
@@ -196,59 +193,70 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
 
             // Process the part after the matched substring (if any)
             size_t endPos = pos + tableStr.length();
-            if (endPos < str_.length()) {
+            if (endPos < str.length()) {
 
                 // Take a substring after the shorthand word
-                std::string after = str_.substr(endPos);
+                std::string after = str.substr(endPos);
 
+                // Iterate through the string char by char
                 for (char c : after) {
 
+                    // Convert the char to string
                     std::string charStr(1, c);
+
+                    // Find the char in our map
                     auto charIt = m_map_strBin->find(charStr);
 
                     if (charIt != m_map_strBin->end()) {
 
+                        // If the char was found, append it's binary
                         const std::vector<bool>& charBin = charIt->second;
                         result.insert(result.end(), charBin.begin(), charBin.end());
                     } else {
 
-                        // Append '#' binary
+                        // Otherwise, append '#' binary
                         auto hashIt = m_map_strBin->find("#");
 
                         if (hashIt != m_map_strBin->end()) {
-
                             const std::vector<bool>& hashBin = hashIt->second;
                             result.insert(result.end(), hashBin.begin(), hashBin.end());
                         } else {
-
                             throw std::runtime_error("'#' not found in the compression table " + m_csv->getPath());
                         }
                     }
                 }
             }
 
-            return result; // we built a composite result using a table shorthand
+            return result; // A composite result using our table's shorthands (if present)
         }
 
         // No multi-character shorthand found so fall back to building the token char by char
         std::vector<bool> result;
-        for (size_t i = 0; i < str_.size(); ++i) {
-            char c = str_[i];
+        for (size_t i = 0; i < str.size(); ++i) {
 
-            // map each char 
+            // Take the character at the current index
+            char c = str[i];
+
+            // Convert the character to a string
             std::string charStr(1, c);
+
+            // Find the character in our map
             auto charIt = m_map_strBin->find(charStr);
 
             if (charIt != m_map_strBin->end()) {
 
+                // If found, append the binary representation
                 const std::vector<bool>& charBin = charIt->second;
                 result.insert(result.end(), charBin.begin(), charBin.end());
             } else {
-                // fallback to '#'
-                
+
+                // Otherwise, fallback to '#'
                 auto poundIt = m_map_strBin->find("#");
+
+                // If # was found in our table
                 if (poundIt != m_map_strBin->end()) {
-                    // append the '#' binary and continue
+
+                    // Append the '#' binary and continue
                     result.insert(result.end(), poundIt->second.begin(), poundIt->second.end());
                     continue;
                 }
@@ -256,32 +264,43 @@ std::vector<bool> CompressionTable::mapStrToBin(const std::string& str) const {
                     // If not found, throw an error
                     throw std::runtime_error("'#' not found in the compression table "+m_csv->getPath());
 
-                // Character not found and no fallback — error
+                // Character not found and no fallback (Control should NEVER reach here)
                 throw std::runtime_error(std::string("Character '") + charStr + "' not found in the compression table " + m_csv->getPath());
             }
         }
 
         return result;
     }
-    else if (str_.length() == 1) {
 
-        // single-char token so attempt to map it directly (we already tried exact lookup above)
-        std::string charStr(1, str_[0]);
+    // If our word is of length 1
+    else if (str.length() == 1) {
+
+        // Convert the selected character to a string
+        std::string charStr(1, str[0]);
+
+        // Attempt to find the character in our table
         auto charIt = m_map_strBin->find(charStr);
+
+        // Return it if found
         if (charIt != m_map_strBin->end())
             return charIt->second;
 
-        // fallback to '#' for unknown single characters
+        // Fallback to '#' for unknown single characters
         auto poundIt = m_map_strBin->find("#");
+
+        // Return # if found
         if (poundIt != m_map_strBin->end())
             return poundIt->second;
         else
-            // If not found, throw an error
+            // If not found, throw an error (should not happen)
             throw std::runtime_error("'#' not found in the compression table "+m_csv->getPath());
         
+        // Control should NEVER reach this statement
         throw std::runtime_error(std::string("Character '") + charStr + "' not found in the compression table " + m_csv->getPath());
     }
     else {
+
+        // Something has gone VERY wrong if control reaches here!
         throw std::runtime_error("Invalid string length in mapStrToBin!");
     }
 }

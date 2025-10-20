@@ -1,13 +1,19 @@
+// ---------------------- Project Includes ----------------------
 #include "Utils.h"
-#include "Ctxt/ctxt.h"
-#include "CompressionTable.h"
 
+// ---------------------- Library Includes ----------------------
+#include "Ctxt/ctxt.h"
+
+// ---------------------- System Includes ----------------------
 #include <iostream>
 #include <algorithm>
 #include <string>
 #include <iomanip>
 
+// Note: Function documentations listed in header file
+
 std::string Utils::extractFileName(std::string path){
+
     // Find the last occurrence of '/' or '\'
     auto pos = path.find_last_of("/\\");
 
@@ -19,6 +25,7 @@ std::string Utils::extractFileName(std::string path){
 }
 
 std::string Utils::extractFileExtension(std::string path){
+
     // Extract the filename from the path
     std::string filename = extractFileName(path);
 
@@ -33,6 +40,7 @@ std::string Utils::extractFileExtension(std::string path){
 }
 
 std::string Utils::removeFileExtension(std::string filename){
+
     // Find the last occurrence of '.'
     auto pos = filename.find_last_of('.');
 
@@ -378,6 +386,8 @@ double Utils::genAccuracy(TextFile* original, TextFile* decompressed){
     unsigned int matchingChars = 0, firstNonMatch = 0;
     char origChar, decompChar;
     while(original->getData()->get(origChar) && decompressed->getData()->get(decompChar)){
+
+        // Ignore # character since it's not supported
         if(decompChar == '#' || origChar == decompChar){
             matchingChars++;
         }
@@ -392,27 +402,6 @@ double Utils::genAccuracy(TextFile* original, TextFile* decompressed){
     while(decompressed->getData()->get(decompChar)){
         totalChars++;
     }
-
-    // // debug
-    // std::cout<<"totalChars: "<<totalChars<<"\nmatchingChars: "<<matchingChars<<"\nfirstNonMatch: "<<firstNonMatch<<"\nOriginal:     ";
-
-    // auto dumpBytes = [](std::stringstream* ss, size_t pos){
-    //     ss->clear();
-    //     ss->seekg(pos);
-    //     for (int i = 0; i < 20; ++i) {
-    //         int c = ss->get();
-    //         if (c == EOF) break;
-    //         std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)c << " ";
-    //     }
-    //     std::cout << "\n";
-    // };
-
-    
-    // dumpBytes(original->getData(), firstNonMatch);
-    // std::cout << "\nDecompressed: ";
-
-    // dumpBytes(decompressed->getData(), firstNonMatch);
-
 
     // Calculate accuracy as a percentage
     if(totalChars == 0) return 100.0; // Both files are empty, consider them perfectly accurate
@@ -438,14 +427,11 @@ double Utils::genPercentReduction(TextFile* original, BinaryFile* compressed){
     // Calculate number of original characters
     unsigned int numOriginalChars = 0;
     char originalChar;
-    while(original->getData()->get(originalChar)){
+    while(original->getData()->get(originalChar))
         numOriginalChars++;
-    }
 
     // Get the number of bits in compressed file
     unsigned int numCompressedBits = compressed->getData()->size();
-
-    // std::cout<<"Debug: numOriginalChars = "<<numOriginalChars<<", numCompressedBits = "<<numCompressedBits<<"\n";
 
     // Use the provided formula to calculate percent reduction
     // 100*((8 * numOriginalChars - numCompressedBits)/(8*numOriginalChars))
@@ -457,7 +443,6 @@ double Utils::genPercentReduction(TextFile* original, BinaryFile* compressed){
 // ****************** PRINTING UTILITIES *****************
 
 void Utils::printUsage(char* argv[]){
-    // Print usage in red to indicate an error/incorrect invocation
     ctxt("\nUsage: \n\n", red, false, false, false);
     ctxt(std::string(argv[0]) + " <mode> <input file(s)>\n", green, false, false, true);
     ctxt("  <mode>: \n\n    c ---- Compression mode\n    d ---- Decompression mode\n    gc --- Generate character frequencies mode\n    gw --- Generate word frequencies mode\n    help - Display more detailed information about modes\n    test - Execute test functions\n    acc -- Compare two text files' accuracy\n", yellow, false, false, true);
