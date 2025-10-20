@@ -4,6 +4,9 @@ A very simple C++ text compression program. Only supports 61 of the 256 ASCII ch
 
 ## THIS WAS COMPLETED FOR THE ECS 101 COMPRESSION GROUP PROJECT
 
+## UML Class Diagram
+![uml](diagrams/UML-Class-Diagram.png)
+
 ## Building & Running - Windows
 ---
 1. Ensure a c++ compiling toolchain is installed (i.e. Cygwin, MSVC, etc.) with support for make

@@ -1,0 +1,121 @@
+@startuml
+
+
+
+
+
+/' Objects '/
+
+class BinaryFile {
+	+BinaryFile(std::string path, std::vector<bool>* data)
+	+~BinaryFile()
+	+getData() : std::vector<bool>*
+	-m_data : std::vector<bool>*
+	+read() : void
+	+setData(std::vector<bool>* data) : void
+	+write() : void
+}
+
+
+class CSVFile {
+	+CSVFile(std::string path, std::vector<std::vector<std::string>>* data)
+	+~CSVFile()
+	+getData() : std::vector<std::vector<std::string>>*
+	-m_data : std::vector<std::vector<std::string>>*
+	+read() : void
+	+setData(std::vector<std::vector<std::string>>* data) : void
+	+write() : void
+}
+
+
+class CompressionTable {
+	+CompressionTable(CSVFile& csv, Mode mode)
+	-m_csv : CSVFile*
+	-m_mode : Mode
+	+getMode() : int {query}
+	+mapBinToStr(const std::vector<bool>& bin) : std::string {query}
+	-m_map_strBin : std::unordered_map<std::string, std::vector<bool>>*
+	-m_map_binStr : std::unordered_map<std::vector<bool>, std::string>*
+	+mapStrToBin(const std::string& str) : std::vector<bool> {query}
+}
+
+
+abstract class File {
+	+getPath() : std::string {query}
+	-m_filePath : std::string
+	+{abstract} read() : void
+	+setPath(std::string path) : void
+	+{abstract} write() : void
+}
+
+
+class TextFile {
+	+TextFile(std::string path, std::stringstream* data)
+	+~TextFile()
+	+getData() : std::stringstream* {query}
+	-m_data : std::stringstream*
+	+normalizePunctuation() : void
+	+read() : void
+	+setData(std::stringstream* data) : void
+	+write() : void
+}
+
+
+class Utils {
+	+{static} equals(const std::vector<T>& l, const std::vector<T>& r) : bool
+	+{static} genAccuracy(TextFile*, TextFile*) : double
+	+{static} genPercentReduction(TextFile*, BinaryFile*) : double
+	+{static} extractFileExtension(std::string path) : std::string
+	+{static} extractFileName(std::string path) : std::string
+	+{static} removeFileExtension(std::string filename) : std::string
+	+{static} genCharFreqs(TextFile*) : std::vector<std::pair<char , double>>*
+	+{static} genWordFreqs(TextFile*) : std::vector<std::pair<std::string , double>>*
+	+{static} printHelp(char* argv) : void
+	+{static} printUsage(char* argv) : void
+	+{static} testAccuracy() : void
+	+{static} testCharFreqs() : void
+	+{static} testFileIO() : void
+	+{static} testWordFreqs() : void
+}
+
+
+enum CompressionTable::Mode {
+	Compress
+	Decompress
+}
+
+
+
+
+
+/' Inheritance relationships '/
+
+File <|-- BinaryFile
+
+
+File <|-- CSVFile
+
+
+File <|-- TextFile
+
+
+
+
+
+/' Aggregation relationships '/
+
+CompressionTable o-- CSVFile
+
+
+
+
+
+
+/' Nested objects '/
+
+CompressionTable +-- CompressionTable::Mode
+
+
+
+
+@enduml
