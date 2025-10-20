@@ -50,6 +50,10 @@ public:
     /// @param data The new stringstream to use as data storage.
     /// @note The caller is responsible for managing the memory of the provided stringstream.
     void setData(std::stringstream* data) { m_data = data; }
+
+    /// @brief Normalizes punctuation in the text data by converting smart quotes and apostrophes to straight quotes and apostrophes. Also converts accented e to regular e.
+    /// @note This modifies the content of the stringstream in place.
+    void normalizePunctuation();
 private:
 
     /// @brief The stringstream that holds the file's data.

@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <cstdint>
+#include <regex>
 
 // ****************** TextFile Implementation ******************
 
@@ -64,6 +65,67 @@ void TextFile::write() {
     else {
         throw std::runtime_error("Could not open text file for writing: " + getPath());
     }
+}
+
+void TextFile::normalizePunctuation() {
+    if (!m_data) return;
+
+    std::string content = m_data->str();
+
+    // UTF-8 encodings
+    const std::pair<std::string, std::string> replacements_utf8[] = {
+        { "\xE2\x80\x9C", "\"" }, // “ (left double quote)               -->  https://www.fileformat.info/info/unicode/char/201c/index.htm
+        { "\xE2\x80\x9D", "\"" }, // ” (right double quote)              -->  https://www.fileformat.info/info/unicode/char/201d/index.htm
+        { "\xE2\x80\x98", "'"  }, // ‘ (left single quote)               -->  https://www.fileformat.info/info/unicode/char/2018/index.htm
+        { "\xE2\x80\x99", "'"  }, // ’ (right single quote)              -->  https://www.fileformat.info/info/unicode/char/2019/index.htm
+        { "\xE2\x80\xB9", "'"  }, // ‹ (single low-9 quote)              -->  https://www.fileformat.info/info/unicode/char/2039/index.htm
+        { "\xE2\x80\xBA", "'"  }, // › (single high-9 quote)             -->  https://www.fileformat.info/info/unicode/char/203a/index.htm
+        { "\xE2\x80\x94", "-"  }, // — (em dash)                         -->  https://www.fileformat.info/info/unicode/char/2014/index.htm
+        { "\xE2\x80\xA6", "..."}, // ellipsis (…)                        -->  https://www.fileformat.info/info/unicode/char/2026/index.htm
+        { "\xC3\xA9",     "e"  }, // é (latin small letter e with acute) -->  https://www.fileformat.info/info/unicode/char/00e9/index.htm
+        { "\xC2\xA0",     " "  }, // non-breaking space ( )              -->  https://www.fileformat.info/info/unicode/char/00a0/index.htm
+        { "\xE2\x80\x8B", ""   }  // zero-width space                    -->  https://www.fileformat.info/info/unicode/char/200b/index.htm
+    };
+
+    // CP1252 encodings
+    const std::pair<std::string, std::string> replacements_cp1252[] = {
+
+        // - https://www.man7.org/linux//man-pages/man7/cp1252.7.html
+
+        { "\x93", "\"" }, // “
+        { "\x94", "\"" }, // ”
+        { "\x91", "'"  }, // ‘
+        { "\x92", "'"  }, // ’
+        { "\xE9", "e"  }, // é
+        { "\x97", "-"  }, // —
+        { "\x85", "..."}, // ellipsis
+        { "\xA0", " "  }  // non-breaking space
+    };
+
+    // Helper lambda for replacement
+    auto replaceAll = [](std::string &str, const std::string &from, const std::string &to) {
+        size_t pos = 0;
+        while ((pos = str.find(from, pos)) != std::string::npos) {
+            str.replace(pos, from.length(), to);
+            pos += to.length();
+        }
+    };
+
+    // Apply UTF-8 replacements
+    for (const auto &pair : replacements_utf8)
+        replaceAll(content, pair.first, pair.second);
+
+    // Apply CP1252 replacements
+    for (const auto &pair : replacements_cp1252)
+        replaceAll(content, pair.first, pair.second);
+
+    // Normalize line endings
+    content = std::regex_replace(content, std::regex("\r\n"), "\n");
+    content = std::regex_replace(content, std::regex("\r"), "\n");
+
+    // Write back normalized data
+    m_data->str(content);
+    m_data->clear(); // reset stream state
 }
 
 // ****************** BinaryFile Implementation ******************
