@@ -403,6 +403,26 @@ double Utils::genAccuracy(TextFile* original, TextFile* decompressed){
         totalChars++;
     }
 
+    // // debug
+    // std::cout<<"totalChars: "<<totalChars<<"\nmatchingChars: "<<matchingChars<<"\nfirstNonMatch: "<<firstNonMatch<<"\nOriginal:     ";
+
+    // auto dumpBytes = [](std::stringstream* ss, size_t pos){
+    //     ss->clear();
+    //     ss->seekg(pos);
+    //     for (int i = 0; i < 20; ++i) {
+    //         int c = ss->get();
+    //         if (c == EOF) break;
+    //         std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)c << " ";
+    //     }
+    //     std::cout << "\n";
+    // };
+
+    
+    // dumpBytes(original->getData(), firstNonMatch);
+    // std::cout << "\nDecompressed: ";
+
+    // dumpBytes(decompressed->getData(), firstNonMatch);
+
     // Calculate accuracy as a percentage
     if(totalChars == 0) return 100.0; // Both files are empty, consider them perfectly accurate
     return (static_cast<double>(matchingChars) / static_cast<double>(totalChars)) * 100.0;
