@@ -508,7 +508,7 @@ void Utils::printHelp(char* argv[]){
 
     ctxt("Note:\n", dark_red, true, false, false);
     ctxt("  - Make sure that the input files exist and are accessible.\n", yellow, false, false, false);
-    ctxt("  - The program will generate output files in the same directory as the input file.\n", yellow, false, false, false);
-    ctxt("  - The compression and decompression modes rely on a predefined compression table file 'table.csv'.\n", yellow, false, false, true);
+    ctxt("  - The program will generate output files in the same directory as the input file if no output destination specified.\n", yellow, false, false, false);
+    ctxt("  - The compression and decompression modes rely on a predefined compression table file './csv/table.csv'.\n", yellow, false, false, true);
 
 }
