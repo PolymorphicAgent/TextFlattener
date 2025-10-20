@@ -32,6 +32,7 @@ public:
     /// @brief This should only be used in Compress mode.
     /// @param str The string to map.
     /// @return The binary sequence mapped to the given string.
+    /// @note If str is a word, will attempt to find smaller words within it and return the built binary
     std::vector<bool> mapStrToBin(const std::string& str) const;
 
 private:
