@@ -115,6 +115,13 @@ int main(int argc, char *argv[]){
             return 1;
         }
 
+        // Normalize the text file in memory (change smart quotes and apostrophes to straight ones, mdashes to -, etc.)
+        txtFile.normalizePunctuation();
+
+        // Reset stringstream position to the beginning
+        txtFile.getData()->clear();
+        txtFile.getData()->seekg(0, std::ios::beg);
+
         // Check if table.csv exists in the csv directory
         CSVFile csvCompTable("./csv/table.csv");
         try {
@@ -134,118 +141,57 @@ int main(int argc, char *argv[]){
 
         std::vector<bool> finalBinary;
 
-        std::string currentWord;
+        std::string currentWord = "";
         std::string::iterator it;
         
         // Get the entire content as a string
         std::string content = txtFile.getData()->str();
-        
-        // Normalize em-dash (U+2014) to ASCII hyphen-minus '-' so it maps to '-' in table.csv
-        const std::string emdash_utf8 = "\xE2\x80\x94"; // U+2014
-        const std::string emdash_cp = "\x97"; // CP1252 0x97
-        size_t p = 0;
-        while((p = content.find(emdash_utf8, p)) != std::string::npos){ content.replace(p, emdash_utf8.size(), "-"); p += 1; }
-        p = 0;
-        while((p = content.find(emdash_cp, p)) != std::string::npos){ content.replace(p, emdash_cp.size(), "-"); p += 1; }
 
-        // Normalize é to e
-        const std::string e_acute_utf8 = "\xC3\xA9"; // U+00E9
-        const std::string e_acute_cp = "\xE9"; // CP1252 0xE9
-        p = 0;
-        while((p = content.find(e_acute_utf8, p)) != std::string::npos){ content.replace(p, e_acute_utf8.size(), "e"); p += 1; }
-        p = 0;
-        while((p = content.find(e_acute_cp, p)) != std::string::npos){ content.replace(p, e_acute_cp.size(), "e"); p += 1; }
+        // Read file content character by character
+        char c;
+        while(txtFile.getData()->get(c)){
 
-        // Iterate through the content decoding UTF-8 code points so multi-byte characters
-        // (like smart quotes) are treated as single string tokens and passed intact to mapStrToBin
-        for(size_t idx = 0; idx < content.size(); ){
-            unsigned char lead = static_cast<unsigned char>(content[idx]);
+            // Check if the selected character is a space or newline
+            if(c == ' ' || c == '\n'){
 
-            // ********** GITHUB COPILOT USED FOR THIS SECTION **********
-            size_t charLen = 1;
-            if((lead & 0x80) == 0) charLen = 1;            // ASCII
-            else if((lead & 0xE0) == 0xC0) charLen = 2;   // 2-byte UTF-8
-            else if((lead & 0xF0) == 0xE0) charLen = 3;   // 3-byte UTF-8
-            else if((lead & 0xF8) == 0xF0) charLen = 4;   // 4-byte UTF-8
+                // Attempt to map the current word to binary
+                try {
+                    // Append the space/newline char to the end of the mapping
+                    std::vector<bool> tmp = table.mapStrToBin(currentWord+std::string(1,c));
 
-            // Safeguard: don't run past the content
-            if(idx + charLen > content.size()) charLen = 1;
-
-            std::string ch = content.substr(idx, charLen);
-            // ********** END GITHUB COPILOT SECTION **********
-
-            // Decide whether ch is whitespace or punctuation (note: isspace/ispunct operate on single-byte chars)
-            bool is_space = (charLen == 1 && isspace(static_cast<unsigned char>(ch[0])));
-            bool is_punct = false;
-            if(charLen == 1) is_punct = ispunct(static_cast<unsigned char>(ch[0]));
-
-            // Treat ASCII apostrophe specially (keep inside words)
-            if(is_space || (is_punct && ch != "'")){
-                if(!currentWord.empty()){
-                    try{
-                        std::vector<bool> wordBinRep = table.mapStrToBin(currentWord);
-                        if(wordBinRep.size() != 0 && currentWord.length() > 1){
-                            finalBinary.insert(finalBinary.end(), wordBinRep.begin(), wordBinRep.end());
-                            currentWord.clear();
-                        } else {
-                            for(size_t k = 0; k < currentWord.size(); ){
-                                // ********** GITHUB COPILOT USED FOR THIS SECTION **********
-                                // extract next UTF-8 char from currentWord
-                                unsigned char l = static_cast<unsigned char>(currentWord[k]);
-                                size_t lLen = 1;
-                                if((l & 0x80) == 0) lLen = 1;
-                                else if((l & 0xE0) == 0xC0) lLen = 2;
-                                else if((l & 0xF0) == 0xE0) lLen = 3;
-                                else if((l & 0xF8) == 0xF0) lLen = 4;
-                                std::string cc = currentWord.substr(k, lLen);
-                                // ********** END GITHUB COPILOT SECTION ********** 
-
-                                std::vector<bool> charBinRep = table.mapStrToBin(cc);
-                                finalBinary.insert(finalBinary.end(), charBinRep.begin(), charBinRep.end());
-                                k += lLen;
-                            }
-                            currentWord.clear();
-                        }
-                    } catch (const std::exception &e){
-                        ctxt(std::string("\nError mapping word to binary: ") + e.what(), red, false, false, true);
-                        return 1;
-                    }
-                }
-
-                // map the space or punctuation itself
-                try{
-                    std::vector<bool> charBinRep = table.mapStrToBin(ch);
-                    finalBinary.insert(finalBinary.end(), charBinRep.begin(), charBinRep.end());
-                } catch (const std::exception &e){
-                    ctxt(std::string("\nError mapping character to binary: ") + e.what(), red, false, false, true);
+                    // Insert the binary to the final boolean vector
+                    finalBinary.insert(finalBinary.end(), tmp.begin(), tmp.end());
+                    
+                } catch (std::exception &e){
+                    ctxt(std::string("\nError mapping word to binary: ") + e.what(), red, false, false, true);
                     return 1;
                 }
-            } else {
-                // append this UTF-8 char to currentWord
-                currentWord += ch;
-            }
 
-            idx += charLen;
+                // Clear the word
+                currentWord.clear();
+            }
+            else {
+                
+                // Append the character to the built string
+                currentWord+=c;
+            }
         }
-        
-        // Process any remaining word at the end
-        if(!currentWord.empty()) {
+
+        // handle the last word
+        if(!currentWord.empty()){
+            // Attempt to map the final word to binary
             try {
-                std::vector<bool> wordBinRep = table.mapStrToBin(currentWord);
-                if(wordBinRep.size() != 0 && currentWord.length() > 1) {
-                    finalBinary.insert(finalBinary.end(), wordBinRep.begin(), wordBinRep.end());
-                } else {
-                    for(char c : currentWord) {
-                        std::vector<bool> charBinRep = table.mapStrToBin(std::string(1, c));
-                        finalBinary.insert(finalBinary.end(), charBinRep.begin(), charBinRep.end());
-                    }
-                }
-            } catch (const std::exception &e) {
+                std::vector<bool> tmp = table.mapStrToBin(currentWord);
+
+                // Insert the binary to the final boolean vector
+                finalBinary.insert(finalBinary.end(), tmp.begin(), tmp.end());
+                
+            } catch (std::exception &e){
                 ctxt(std::string("\nError mapping final word to binary: ") + e.what(), red, false, false, true);
                 return 1;
             }
         }
-        
+                
         // Write the binary vector to the file
         BinaryFile binOut(outputFilePath);
         binOut.setData(&finalBinary);
@@ -258,6 +204,12 @@ int main(int argc, char *argv[]){
         }
 
         ctxt(std::string("\nSuccessfully compressed '") + inputFileName + "' to '" + outputFilePath + "'.\n", green, false, false, true);
+
+        // Calculate the percent reduction
+        double reduction = Utils::genPercentReduction(&txtFile, &binOut);
+
+        ctxt(std::string("Compression reduced file size by ") + std::to_string(reduction) + "%.\n", magenta, false, false, true);
+
     }
 
     // Handle decompression mode
@@ -559,13 +511,25 @@ int main(int argc, char *argv[]){
     - https://www.geeksforgeeks.org/dsa/little-and-big-endian-mystery/
     - https://www.w3schools.com/c/c_bitwise_operators.php
 
+
+    ASCII TEXT ENCODING
+    - https://codeshack.io/text-to-ascii-converter/
+    - https://dencode.com/en/string/unicode-escape
+    - https://www.fileformat.info/info/unicode/char/201c/index.htm
+    - https://www.fileformat.info/info/unicode/char/201d/index.htm
+    - https://www.fileformat.info/info/unicode/char/2018/index.htm
+    - https://www.fileformat.info/info/unicode/char/2019/index.htm
+    - https://www.fileformat.info/info/unicode/char/2039/index.htm
+    - https://www.fileformat.info/info/unicode/char/203a/index.htm
+    - https://www.fileformat.info/info/unicode/char/00e9/index.htm
+    - https://www.fileformat.info/info/unicode/char/2014/index.htm
+    - https://www.fileformat.info/info/unicode/char/00a0/index.htm
+    - https://www.fileformat.info/info/unicode/char/200b/index.htm
+    - https://www.fileformat.info/info/unicode/char/2026/index.htm
+    - https://www.man7.org/linux//man-pages/man7/cp1252.7.html
+
+
     MISC.
     - https://www.geeksforgeeks.org/cpp/how-to-append-a-vector-to-a-vector-in-cpp/
-    - https://codeshack.io/text-to-ascii-converter/
-
-    GITHUB COPILOT was used on 15 lines of code in two sections due to my infamiliarity with text encoding. These lines can be found surrounded by the following comments:
-    
-    // ********** GITHUB COPILOT USED FOR THIS SECTION **********
-    // ********** END GITHUB COPILOT SECTION ********** 
 
 */
