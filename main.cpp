@@ -262,20 +262,29 @@ int main(int argc, char *argv[]){
         std::vector<bool> tmp;
         while(count < binFile.getData()->size()){
 
+            // Add the current bit
             tmp.push_back(binFile.getData()->at(count));
 
-            if(binFile.getData()->at(count)){//short
-                //grab the next 2
+            // If a short representation
+            if(binFile.getData()->at(count)){
+
+                // Grab the next 2 bits
                 one = binFile.getData()->at(++count);
                 tmp.push_back(one);
                 two = binFile.getData()->at(++count);
                 tmp.push_back(two);
 
-                if(!one && !two){}//3bit
+                // If both bits are 0, then we have an extra short representation
+                if(!one && !two){}// Stop here!
+
+                // Otherwise, grab the next bit
                 else tmp.push_back(binFile.getData()->at(++count));
             }
-            else {//long
-                //grab the next 6
+
+            // We have a long representation
+            else {
+
+                // Grab the next 6 bits
                 for(int i = 0; i<6; i++)
                     tmp.push_back(binFile.getData()->at(++count));
             }
@@ -299,6 +308,7 @@ int main(int argc, char *argv[]){
             // Clear our temporary vector
             tmp.clear();
 
+            // Increment our index
             count++;
         }
 
