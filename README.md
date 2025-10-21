@@ -17,7 +17,7 @@ Note: Dynamic runtime dictionary approach was eliminated by professor limitation
 1. Ensure a c++ compiling toolchain is installed (i.e. Cygwin, MSVC, etc.) with support for make
 2. Ensure the make command is on your path (or simply copy the path to the make executable)
 3. Open powershell and change directory to the unzipped source directory
-4. Execute the following command (where <make> is either the path to the make executable if not added to path)
+4. Execute the following command (where \<make\> is either the path to the make executable if not added to path)
 ```
 <make> -j8
 ```
